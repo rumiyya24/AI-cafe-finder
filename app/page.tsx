@@ -15,6 +15,7 @@ export default function Home() {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -22,6 +23,7 @@ export default function Home() {
 
     setLoading(true);
     setError(null);
+    setHasSearched(true);
 
     try {
       const response = await fetch(`/api/places?q=${encodeURIComponent(query)}`);
@@ -89,6 +91,11 @@ export default function Home() {
               </li>
             ))}
           </ul>
+        )}
+        {!loading && !error && hasSearched && cafes.length === 0 && (
+          <p className="text-center text-neutral-500">
+            No cafes found. Try a different search.
+          </p>
         )}
       </div>
     </main>
