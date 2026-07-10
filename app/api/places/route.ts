@@ -18,6 +18,12 @@ export async function GET(request: Request) {
     );
   }
 
+  // TODO: hardcoded to Baku for now -- replace with user's actual
+  // location or a location picker once the UI supports it
+  const BAKU_LAT = 40.4093;
+  const BAKU_LNG = 49.8671;
+  const SEARCH_RADIUS_METERS = 15000; // 15km, covers greater Baku
+
   const response = await fetch(
     "https://places.googleapis.com/v1/places:searchText",
     {
@@ -30,6 +36,15 @@ export async function GET(request: Request) {
       },
       body: JSON.stringify({
         textQuery: query,
+        locationBias: {
+          circle: {
+            center: {
+              latitude: BAKU_LAT,
+              longitude: BAKU_LNG,
+            },
+            radius: SEARCH_RADIUS_METERS,
+          },
+        },
       }),
     }
   );
