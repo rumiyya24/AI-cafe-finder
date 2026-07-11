@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import CafeMap from "./components/CafeMap";
 
 type Cafe = {
   id: string;
@@ -97,6 +98,10 @@ export default function Home() {
             No cafes found. Try a different search.
           </p>
         )}
+      </div>
+
+      <div className="max-w-2xl w-full mt-10">
+        <CafeMap />
       </div>
     </main>
   );
