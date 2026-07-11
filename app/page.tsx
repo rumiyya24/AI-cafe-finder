@@ -12,12 +12,24 @@ type Cafe = {
   location?: { latitude: number; longitude: number };
 };
 
+type VibeInfo = {
+  noise_level: string;
+  noise_evidence: string;
+  wifi: string;
+  wifi_evidence: string;
+  outlets: string;
+  outlets_evidence: string;
+  good_for_studying: string;
+  studying_evidence: string;
+};
+
 export default function Home() {
   const [query, setQuery] = useState("");
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [vibeData, setVibeData] = useState<Record<string, VibeInfo | "loading" | "error">>({});
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +53,23 @@ export default function Home() {
       setCafes([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function checkVibe(cafeId: string) {
+    setVibeData((prev) => ({ ...prev, [cafeId]: "loading" }));
+
+    try {
+      const response = await fetch(`/api/places/${cafeId}/vibe`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Vibe check failed");
+      }
+
+      setVibeData((prev) => ({ ...prev, [cafeId]: data }));
+    } catch {
+      setVibeData((prev) => ({ ...prev, [cafeId]: "error" }));
     }
   }
 
@@ -90,6 +119,56 @@ export default function Home() {
                     ⭐ {cafe.rating} ({cafe.userRatingCount} reviews)
                   </p>
                 )}
+
+                {!vibeData[cafe.id] && (
+                  <button
+                    onClick={() => checkVibe(cafe.id)}
+                    className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 underline"
+                  >
+                    Check vibe
+                  </button>
+                )}
+
+                {vibeData[cafe.id] === "loading" && (
+                  <p className="mt-2 text-sm text-neutral-400">Checking vibe...</p>
+                )}
+
+                {vibeData[cafe.id] === "error" && (
+                  <p className="mt-2 text-sm text-red-500">Couldn&apos;t check vibe</p>
+                )}
+
+                {vibeData[cafe.id] &&
+                  vibeData[cafe.id] !== "loading" &&
+                  vibeData[cafe.id] !== "error" && (
+                    <div className="mt-2">
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                          🔊 {(vibeData[cafe.id] as VibeInfo).noise_level}
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                          📶 wifi: {(vibeData[cafe.id] as VibeInfo).wifi}
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                          🔌 outlets: {(vibeData[cafe.id] as VibeInfo).outlets}
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                          📚 studying: {(vibeData[cafe.id] as VibeInfo).good_for_studying}
+                        </span>
+                      </div>
+
+                      <details className="mt-2 text-xs text-neutral-500">
+                        <summary className="cursor-pointer underline">
+                          View evidence
+                        </summary>
+                        <ul className="mt-1 space-y-1 pl-4 list-disc">
+                          <li>Noise: {(vibeData[cafe.id] as VibeInfo).noise_evidence}</li>
+                          <li>Wifi: {(vibeData[cafe.id] as VibeInfo).wifi_evidence}</li>
+                          <li>Outlets: {(vibeData[cafe.id] as VibeInfo).outlets_evidence}</li>
+                          <li>Studying: {(vibeData[cafe.id] as VibeInfo).studying_evidence}</li>
+                        </ul>
+                      </details>
+                    </div>
+                  )}
               </li>
             ))}
           </ul>
@@ -101,7 +180,7 @@ export default function Home() {
         )}
       </div>
 
-     <div className="max-w-2xl w-full mt-10">
+      <div className="max-w-2xl w-full mt-10">
         <CafeMap cafes={cafes} />
       </div>
     </main>
