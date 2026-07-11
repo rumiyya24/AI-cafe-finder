@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask":
-          "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount",
+          "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.location",
       },
       body: JSON.stringify({
         textQuery: query,
