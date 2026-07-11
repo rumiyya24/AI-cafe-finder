@@ -1,8 +1,10 @@
 "use client";
 
-import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { useEffect } from "react";
+import { APIProvider, Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
 
-const BAKU_CENTER = { lat: 40.4093, lng: 49.8671 };
+const DEFAULT_CENTER = { lat: 20, lng: 0 }; // roughly centers the whole world map
+const DEFAULT_ZOOM = 2;
 
 type Cafe = {
   id: string;
@@ -13,6 +15,29 @@ type Cafe = {
 type CafeMapProps = {
   cafes: Cafe[];
 };
+
+function FitBoundsToResults({ cafes }: { cafes: Cafe[] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const validCafes = cafes.filter((cafe) => cafe.location);
+    if (validCafes.length === 0) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    validCafes.forEach((cafe) => {
+      bounds.extend({
+        lat: cafe.location!.latitude,
+        lng: cafe.location!.longitude,
+      });
+    });
+
+    map.fitBounds(bounds);
+  }, [map, cafes]);
+
+  return null;
+}
 
 export default function CafeMap({ cafes }: CafeMapProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -29,10 +54,11 @@ export default function CafeMap({ cafes }: CafeMapProps) {
     <APIProvider apiKey={apiKey}>
       <div className="w-full h-96 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
         <Map
-          defaultCenter={BAKU_CENTER}
-          defaultZoom={12}
+          defaultCenter={DEFAULT_CENTER}
+          defaultZoom={DEFAULT_ZOOM}
           mapId="cafe-finder-map"
         >
+          <FitBoundsToResults cafes={cafes} />
           {cafes
             .filter((cafe) => cafe.location)
             .map((cafe) => (
