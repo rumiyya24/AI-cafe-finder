@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import CafeMap from "./components/CafeMap";
+import Link from "next/link";
 
 type Cafe = {
   id: string;
@@ -210,6 +211,11 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center px-6 py-16 bg-white dark:bg-neutral-950">
       <div className="max-w-2xl w-full text-center">
+        <div className="flex justify-end mb-4">
+          <Link href="/favorites" className="text-sm text-neutral-500 underline">
+            ❤️ Favorites
+          </Link>
+        </div>
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-neutral-900 dark:text-white">
           Find your kind of cafe
         </h1>
