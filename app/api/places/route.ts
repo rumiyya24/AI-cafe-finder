@@ -18,18 +18,6 @@ export async function GET(request: Request) {
     );
   }
 
-// TODO: hardcoded to Baku for now -- replace with user's actual
-  // location or a location picker once the UI supports it
-  // Rectangle roughly covering a 15km radius around central Baku
-  // (locationRestriction for Text Search only supports rectangles,
-  // not circles -- unlike locationBias, which we tried first but
-  // still let clearly-matching results from anywhere in the world
-  // through, since bias only affects ranking, not exclusion)
-  const BAKU_BOUNDS = {
-    low: { latitude: 40.2743, longitude: 49.6891 },
-    high: { latitude: 40.5443, longitude: 50.0451 },
-  };
-
   const response = await fetch(
     "https://places.googleapis.com/v1/places:searchText",
     {
@@ -43,9 +31,6 @@ export async function GET(request: Request) {
      body: JSON.stringify({
         textQuery: query,
         includedType: "cafe",
-        locationRestriction: {
-          rectangle: BAKU_BOUNDS,
-        },
       }),
     }
   );
