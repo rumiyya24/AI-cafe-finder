@@ -9,6 +9,7 @@ type Cafe = {
   formattedAddress: string;
   rating?: number;
   userRatingCount?: number;
+  location?: { latitude: number; longitude: number };
 };
 
 export default function Home() {
@@ -100,8 +101,8 @@ export default function Home() {
         )}
       </div>
 
-      <div className="max-w-2xl w-full mt-10">
-        <CafeMap />
+     <div className="max-w-2xl w-full mt-10">
+        <CafeMap cafes={cafes} />
       </div>
     </main>
   );
