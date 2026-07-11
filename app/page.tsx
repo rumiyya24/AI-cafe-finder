@@ -48,6 +48,9 @@ export default function Home() {
     good_for_studying: "",
     personal_note: "",
   });
+  const [filterNoise, setFilterNoise] = useState("");
+  const [filterWifi, setFilterWifi] = useState("");
+  const [filterStudying, setFilterStudying] = useState("");
 
   useEffect(() => {
     fetch("/api/favorites")
@@ -58,9 +61,7 @@ export default function Home() {
         );
         setFavorites(ids);
       })
-      .catch(() => {
-        // Silently fail -- favorites just won't be pre-marked, not critical
-      });
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -89,6 +90,9 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setHasSearched(true);
+    setFilterNoise("");
+    setFilterWifi("");
+    setFilterStudying("");
 
     try {
       const response = await fetch(`/api/places?q=${encodeURIComponent(query)}`);
@@ -174,6 +178,35 @@ export default function Home() {
     setEditingNote(null);
   }
 
+  function getEffectiveVibe(cafeId: string) {
+    const vibe = vibeData[cafeId];
+    if (!vibe || vibe === "loading" || vibe === "error") return null;
+    const note = notes[cafeId];
+    return {
+      noise_level: note?.noise_level || vibe.noise_level,
+      wifi: note?.wifi || vibe.wifi,
+      good_for_studying: note?.good_for_studying || vibe.good_for_studying,
+    };
+  }
+
+  const filtersActive = filterNoise || filterWifi || filterStudying;
+
+  const checkedCount = cafes.filter((cafe) => {
+    const v = vibeData[cafe.id];
+    return v && v !== "loading" && v !== "error";
+  }).length;
+
+  const filteredCafes = !filtersActive
+    ? cafes
+    : cafes.filter((cafe) => {
+        const effective = getEffectiveVibe(cafe.id);
+        if (!effective) return false;
+        if (filterNoise && effective.noise_level !== filterNoise) return false;
+        if (filterWifi && effective.wifi !== filterWifi) return false;
+        if (filterStudying && effective.good_for_studying !== filterStudying) return false;
+        return true;
+      });
+
   return (
     <main className="min-h-screen flex flex-col items-center px-6 py-16 bg-white dark:bg-neutral-950">
       <div className="max-w-2xl w-full text-center">
@@ -195,7 +228,40 @@ export default function Home() {
         </form>
       </div>
 
-      <div className="max-w-2xl w-full mt-10">
+      {cafes.length > 0 && (
+        <div className="max-w-2xl w-full mt-6 flex flex-wrap gap-2 items-center justify-center text-sm">
+          <select
+            value={filterNoise}
+            onChange={(e) => setFilterNoise(e.target.value)}
+            className="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+          >
+            <option value="">Any noise</option>
+            <option value="quiet">Quiet</option>
+            <option value="moderate">Moderate</option>
+            <option value="loud">Loud</option>
+          </select>
+          <select
+            value={filterWifi}
+            onChange={(e) => setFilterWifi(e.target.value)}
+            className="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+          >
+            <option value="">Any wifi</option>
+            <option value="yes">Has wifi</option>
+            <option value="no">No wifi</option>
+          </select>
+          <select
+            value={filterStudying}
+            onChange={(e) => setFilterStudying(e.target.value)}
+            className="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+          >
+            <option value="">Any studying</option>
+            <option value="yes">Good for studying</option>
+            <option value="no">Not for studying</option>
+          </select>
+        </div>
+      )}
+
+      <div className="max-w-2xl w-full mt-4">
         {loading && (
           <p className="text-center text-neutral-500">Searching...</p>
         )}
@@ -205,153 +271,176 @@ export default function Home() {
         )}
 
         {!loading && !error && cafes.length > 0 && (
-          <ul className="space-y-4">
-            {cafes.map((cafe) => (
-              <li
-                key={cafe.id}
-                className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-semibold text-neutral-900 dark:text-white">
-                    {cafe.displayName.text}
-                  </h2>
-                  <button
-                    onClick={() => toggleFavorite(cafe)}
-                    aria-label={favorites.has(cafe.id) ? "Remove favorite" : "Add favorite"}
-                    className="text-xl leading-none shrink-0"
-                  >
-                    {favorites.has(cafe.id) ? "❤️" : "🤍"}
-                  </button>
-                </div>
-                <p className="text-sm text-neutral-500">{cafe.formattedAddress}</p>
-                {cafe.rating && (
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                    ⭐ {cafe.rating} ({cafe.userRatingCount} reviews)
-                  </p>
-                )}
+          <>
+            {filtersActive && (
+              <p className="text-center text-xs text-neutral-500 mb-3">
+                Showing {filteredCafes.length} of {cafes.length} results
+                ({checkedCount} vibe-checked -- check more cafes to include them in filtering)
+              </p>
+            )}
 
-                {!vibeData[cafe.id] && (
-                  <button
-                    onClick={() => checkVibe(cafe.id)}
-                    className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 underline"
-                  >
-                    Check vibe
-                  </button>
-                )}
+            {filtersActive && checkedCount === 0 && (
+              <p className="text-center text-neutral-500">
+                Filters only apply to cafes you&apos;ve checked the vibe for.
+                Click &quot;Check vibe&quot; on a few results below, then your
+                filters will start working.
+              </p>
+            )}
 
-                {vibeData[cafe.id] === "loading" && (
-                  <p className="mt-2 text-sm text-neutral-400">Checking vibe...</p>
-                )}
+            {filtersActive && checkedCount > 0 && filteredCafes.length === 0 && (
+              <p className="text-center text-neutral-500">
+                None of your checked cafes match these filters yet. Try checking more, or clear filters.
+              </p>
+            )}
 
-                {vibeData[cafe.id] === "error" && (
-                  <p className="mt-2 text-sm text-red-500">Couldn&apos;t check vibe</p>
-                )}
-
-                {vibeData[cafe.id] &&
-                  vibeData[cafe.id] !== "loading" &&
-                  vibeData[cafe.id] !== "error" && (
-                    <div className="mt-2">
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                          🔊 {notes[cafe.id]?.noise_level || (vibeData[cafe.id] as VibeInfo).noise_level}
-                          {notes[cafe.id]?.noise_level && " ✓"}
-                        </span>
-                        <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                          📶 wifi: {notes[cafe.id]?.wifi || (vibeData[cafe.id] as VibeInfo).wifi}
-                          {notes[cafe.id]?.wifi && " ✓"}
-                        </span>
-                        <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                          🔌 outlets: {notes[cafe.id]?.outlets || (vibeData[cafe.id] as VibeInfo).outlets}
-                          {notes[cafe.id]?.outlets && " ✓"}
-                        </span>
-                        <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                          📚 studying: {notes[cafe.id]?.good_for_studying || (vibeData[cafe.id] as VibeInfo).good_for_studying}
-                          {notes[cafe.id]?.good_for_studying && " ✓"}
-                        </span>
-                      </div>
-
-                      <details className="mt-2 text-xs text-neutral-500">
-                        <summary className="cursor-pointer underline">
-                          View evidence
-                        </summary>
-                        <ul className="mt-1 space-y-1 pl-4 list-disc">
-                          <li>Noise: {(vibeData[cafe.id] as VibeInfo).noise_evidence}</li>
-                          <li>Wifi: {(vibeData[cafe.id] as VibeInfo).wifi_evidence}</li>
-                          <li>Outlets: {(vibeData[cafe.id] as VibeInfo).outlets_evidence}</li>
-                          <li>Studying: {(vibeData[cafe.id] as VibeInfo).studying_evidence}</li>
-                        </ul>
-                      </details>
-
-                      {notes[cafe.id]?.personal_note && (
-                        <p className="mt-2 text-xs italic text-neutral-500">
-                          Your note: {notes[cafe.id]?.personal_note}
-                        </p>
-                      )}
-                    </div>
+            <ul className="space-y-4">
+              {filteredCafes.map((cafe) => (
+                <li
+                  key={cafe.id}
+                  className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h2 className="font-semibold text-neutral-900 dark:text-white">
+                      {cafe.displayName.text}
+                    </h2>
+                    <button
+                      onClick={() => toggleFavorite(cafe)}
+                      aria-label={favorites.has(cafe.id) ? "Remove favorite" : "Add favorite"}
+                      className="text-xl leading-none shrink-0"
+                    >
+                      {favorites.has(cafe.id) ? "❤️" : "🤍"}
+                    </button>
+                  </div>
+                  <p className="text-sm text-neutral-500">{cafe.formattedAddress}</p>
+                  {cafe.rating && (
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                      ⭐ {cafe.rating} ({cafe.userRatingCount} reviews)
+                    </p>
                   )}
 
-                {editingNote === cafe.id ? (
-                  <div className="mt-2 space-y-2 p-3 rounded border border-neutral-200 dark:border-neutral-800">
-                    <input
-                      type="text"
-                      placeholder="Noise (e.g. quiet)"
-                      value={noteDraft.noise_level}
-                      onChange={(e) => setNoteDraft((prev) => ({ ...prev, noise_level: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Wifi (e.g. yes)"
-                      value={noteDraft.wifi}
-                      onChange={(e) => setNoteDraft((prev) => ({ ...prev, wifi: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Outlets (e.g. yes)"
-                      value={noteDraft.outlets}
-                      onChange={(e) => setNoteDraft((prev) => ({ ...prev, outlets: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Good for studying (e.g. yes)"
-                      value={noteDraft.good_for_studying}
-                      onChange={(e) => setNoteDraft((prev) => ({ ...prev, good_for_studying: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
-                    />
-                    <textarea
-                      placeholder="Personal note"
-                      value={noteDraft.personal_note}
-                      onChange={(e) => setNoteDraft((prev) => ({ ...prev, personal_note: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => saveNote(cafe)}
-                        className="text-sm px-3 py-1 rounded bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingNote(null)}
-                        className="text-sm px-3 py-1 rounded border border-neutral-300 dark:border-neutral-700"
-                      >
-                        Cancel
-                      </button>
+                  {!vibeData[cafe.id] && (
+                    <button
+                      onClick={() => checkVibe(cafe.id)}
+                      className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 underline"
+                    >
+                      Check vibe
+                    </button>
+                  )}
+
+                  {vibeData[cafe.id] === "loading" && (
+                    <p className="mt-2 text-sm text-neutral-400">Checking vibe...</p>
+                  )}
+
+                  {vibeData[cafe.id] === "error" && (
+                    <p className="mt-2 text-sm text-red-500">Couldn&apos;t check vibe</p>
+                  )}
+
+                  {vibeData[cafe.id] &&
+                    vibeData[cafe.id] !== "loading" &&
+                    vibeData[cafe.id] !== "error" && (
+                      <div className="mt-2">
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                            🔊 {notes[cafe.id]?.noise_level || (vibeData[cafe.id] as VibeInfo).noise_level}
+                            {notes[cafe.id]?.noise_level && " ✓"}
+                          </span>
+                          <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                            📶 wifi: {notes[cafe.id]?.wifi || (vibeData[cafe.id] as VibeInfo).wifi}
+                            {notes[cafe.id]?.wifi && " ✓"}
+                          </span>
+                          <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                            🔌 outlets: {notes[cafe.id]?.outlets || (vibeData[cafe.id] as VibeInfo).outlets}
+                            {notes[cafe.id]?.outlets && " ✓"}
+                          </span>
+                          <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                            📚 studying: {notes[cafe.id]?.good_for_studying || (vibeData[cafe.id] as VibeInfo).good_for_studying}
+                            {notes[cafe.id]?.good_for_studying && " ✓"}
+                          </span>
+                        </div>
+
+                        <details className="mt-2 text-xs text-neutral-500">
+                          <summary className="cursor-pointer underline">
+                            View evidence
+                          </summary>
+                          <ul className="mt-1 space-y-1 pl-4 list-disc">
+                            <li>Noise: {(vibeData[cafe.id] as VibeInfo).noise_evidence}</li>
+                            <li>Wifi: {(vibeData[cafe.id] as VibeInfo).wifi_evidence}</li>
+                            <li>Outlets: {(vibeData[cafe.id] as VibeInfo).outlets_evidence}</li>
+                            <li>Studying: {(vibeData[cafe.id] as VibeInfo).studying_evidence}</li>
+                          </ul>
+                        </details>
+
+                        {notes[cafe.id]?.personal_note && (
+                          <p className="mt-2 text-xs italic text-neutral-500">
+                            Your note: {notes[cafe.id]?.personal_note}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                  {editingNote === cafe.id ? (
+                    <div className="mt-2 space-y-2 p-3 rounded border border-neutral-200 dark:border-neutral-800">
+                      <input
+                        type="text"
+                        placeholder="Noise (e.g. quiet)"
+                        value={noteDraft.noise_level}
+                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, noise_level: e.target.value }))}
+                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Wifi (e.g. yes)"
+                        value={noteDraft.wifi}
+                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, wifi: e.target.value }))}
+                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Outlets (e.g. yes)"
+                        value={noteDraft.outlets}
+                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, outlets: e.target.value }))}
+                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Good for studying (e.g. yes)"
+                        value={noteDraft.good_for_studying}
+                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, good_for_studying: e.target.value }))}
+                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      />
+                      <textarea
+                        placeholder="Personal note"
+                        value={noteDraft.personal_note}
+                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, personal_note: e.target.value }))}
+                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => saveNote(cafe)}
+                          className="text-sm px-3 py-1 rounded bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingNote(null)}
+                          className="text-sm px-3 py-1 rounded border border-neutral-300 dark:border-neutral-700"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => startEditingNote(cafe)}
-                    className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 underline block"
-                  >
-                    {notes[cafe.id] ? "Edit your note" : "Add your note"}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
+                  ) : (
+                    <button
+                      onClick={() => startEditingNote(cafe)}
+                      className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 underline block"
+                    >
+                      {notes[cafe.id] ? "Edit your note" : "Add your note"}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
         {!loading && !error && hasSearched && cafes.length === 0 && (
           <p className="text-center text-neutral-500">
