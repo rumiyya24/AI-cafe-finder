@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CafeMap from "./components/CafeMap";
 
 type Cafe = {
@@ -30,6 +30,21 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [vibeData, setVibeData] = useState<Record<string, VibeInfo | "loading" | "error">>({});
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch("/api/favorites")
+      .then((res) => res.json())
+      .then((data) => {
+        const ids = new Set<string>(
+          (data.favorites || []).map((f: { place_id: string }) => f.place_id)
+        );
+        setFavorites(ids);
+      })
+      .catch(() => {
+        // Silently fail -- favorites just won't be pre-marked, not critical
+      });
+  }, []);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -73,6 +88,30 @@ export default function Home() {
     }
   }
 
+  async function toggleFavorite(cafe: Cafe) {
+    const isFavorited = favorites.has(cafe.id);
+
+    if (isFavorited) {
+      await fetch(`/api/favorites?place_id=${cafe.id}`, { method: "DELETE" });
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        next.delete(cafe.id);
+        return next;
+      });
+    } else {
+      await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          place_id: cafe.id,
+          cafe_name: cafe.displayName.text,
+          cafe_address: cafe.formattedAddress,
+        }),
+      });
+      setFavorites((prev) => new Set(prev).add(cafe.id));
+    }
+  }
+
   return (
     <main className="min-h-screen flex flex-col items-center px-6 py-16 bg-white dark:bg-neutral-950">
       <div className="max-w-2xl w-full text-center">
@@ -110,9 +149,18 @@ export default function Home() {
                 key={cafe.id}
                 className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800"
               >
-                <h2 className="font-semibold text-neutral-900 dark:text-white">
-                  {cafe.displayName.text}
-                </h2>
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="font-semibold text-neutral-900 dark:text-white">
+                    {cafe.displayName.text}
+                  </h2>
+                  <button
+                    onClick={() => toggleFavorite(cafe)}
+                    aria-label={favorites.has(cafe.id) ? "Remove favorite" : "Add favorite"}
+                    className="text-xl leading-none shrink-0"
+                  >
+                    {favorites.has(cafe.id) ? "❤️" : "🤍"}
+                  </button>
+                </div>
                 <p className="text-sm text-neutral-500">{cafe.formattedAddress}</p>
                 {cafe.rating && (
                   <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
