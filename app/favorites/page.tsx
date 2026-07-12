@@ -18,9 +18,17 @@ type NoteInfo = {
   personal_note?: string;
 };
 
+type VibeInfo = {
+  noise_level: string;
+  wifi: string;
+  outlets: string;
+  good_for_studying: string;
+};
+
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [notes, setNotes] = useState<Record<string, NoteInfo>>({});
+  const [vibes, setVibes] = useState<Record<string, VibeInfo>>({});
   const [loading, setLoading] = useState(true);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState<NoteInfo>({
@@ -35,8 +43,9 @@ export default function FavoritesPage() {
     Promise.all([
       fetch("/api/favorites").then((res) => res.json()),
       fetch("/api/notes").then((res) => res.json()),
+      fetch("/api/vibes").then((res) => res.json()),
     ])
-      .then(([favData, noteData]) => {
+      .then(([favData, noteData, vibeData]) => {
         setFavorites(favData.favorites || []);
 
         const notesMap: Record<string, NoteInfo> = {};
@@ -50,6 +59,17 @@ export default function FavoritesPage() {
           };
         }
         setNotes(notesMap);
+
+        const vibesMap: Record<string, VibeInfo> = {};
+        for (const vibe of vibeData.vibes || []) {
+          vibesMap[vibe.place_id] = {
+            noise_level: vibe.noise_level,
+            wifi: vibe.wifi,
+            outlets: vibe.outlets,
+            good_for_studying: vibe.good_for_studying,
+          };
+        }
+        setVibes(vibesMap);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -133,26 +153,30 @@ export default function FavoritesPage() {
                   Favorited {new Date(favorite.created_at).toLocaleDateString()}
                 </p>
 
-                {notes[favorite.place_id] && (
+                {(notes[favorite.place_id] || vibes[favorite.place_id]) && (
                   <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                    {notes[favorite.place_id].noise_level && (
+                    {(notes[favorite.place_id]?.noise_level || vibes[favorite.place_id]?.noise_level) && (
                       <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        🔊 {notes[favorite.place_id].noise_level} ✓
+                        🔊 {notes[favorite.place_id]?.noise_level || vibes[favorite.place_id]?.noise_level}
+                        {notes[favorite.place_id]?.noise_level && " ✓"}
                       </span>
                     )}
-                    {notes[favorite.place_id].wifi && (
+                    {(notes[favorite.place_id]?.wifi || vibes[favorite.place_id]?.wifi) && (
                       <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        📶 wifi: {notes[favorite.place_id].wifi} ✓
+                        📶 wifi: {notes[favorite.place_id]?.wifi || vibes[favorite.place_id]?.wifi}
+                        {notes[favorite.place_id]?.wifi && " ✓"}
                       </span>
                     )}
-                    {notes[favorite.place_id].outlets && (
+                    {(notes[favorite.place_id]?.outlets || vibes[favorite.place_id]?.outlets) && (
                       <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        🔌 outlets: {notes[favorite.place_id].outlets} ✓
+                        🔌 outlets: {notes[favorite.place_id]?.outlets || vibes[favorite.place_id]?.outlets}
+                        {notes[favorite.place_id]?.outlets && " ✓"}
                       </span>
                     )}
-                    {notes[favorite.place_id].good_for_studying && (
+                    {(notes[favorite.place_id]?.good_for_studying || vibes[favorite.place_id]?.good_for_studying) && (
                       <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        📚 studying: {notes[favorite.place_id].good_for_studying} ✓
+                        📚 studying: {notes[favorite.place_id]?.good_for_studying || vibes[favorite.place_id]?.good_for_studying}
+                        {notes[favorite.place_id]?.good_for_studying && " ✓"}
                       </span>
                     )}
                   </div>
