@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import CafeMap from "./components/CafeMap";
 import Link from "next/link";
 
@@ -16,13 +16,18 @@ type Cafe = {
 type VibeInfo = {
   noise_level: string;
   noise_evidence: string;
+  noise_review_index?: number;
   wifi: string;
   wifi_evidence: string;
+  wifi_review_index?: number;
   outlets: string;
   outlets_evidence: string;
+  outlets_review_index?: number;
   good_for_studying: string;
   studying_evidence: string;
+  studying_review_index?: number;
   data_source?: string;
+  review_urls?: string[];
 };
 
 type NoteInfo = {
@@ -32,6 +37,14 @@ type NoteInfo = {
   good_for_studying?: string;
   personal_note?: string;
 };
+
+type EvidenceItem = {
+  label: string;
+  text: string;
+  idx?: number;
+};
+
+const LinkTag = "a" as const;
 
 export default function Home() {
   const [query, setQuery] = useState("");
@@ -195,6 +208,31 @@ export default function Home() {
       wifi: note?.wifi || vibe.wifi,
       good_for_studying: note?.good_for_studying || vibe.good_for_studying,
     };
+  }
+
+  function renderEvidenceItem(item: EvidenceItem, reviewUrls?: string[]) {
+    const url =
+      item.idx && item.idx > 0 && reviewUrls ? reviewUrls[item.idx - 1] : null;
+    return (
+      <li key={item.label}>
+        {item.label}: {item.text}
+        {url
+          ? " "
+          : null}
+        {url
+          ? React.createElement(
+              LinkTag,
+              {
+                href: url,
+                target: "_blank",
+                rel: "noopener noreferrer",
+                className: "underline text-neutral-600 dark:text-neutral-300",
+              },
+              "(view source)"
+            )
+          : null}
+      </li>
+    );
   }
 
   const filtersActive = filterNoise || filterWifi || filterStudying;
@@ -365,6 +403,13 @@ export default function Home() {
                       if (effectiveWifi === "yes") recommendedFor.push("Remote work");
                       if (effectiveNoise === "quiet") recommendedFor.push("Focus / deep work");
 
+                      const evidenceItems: EvidenceItem[] = [
+                        { label: "Noise", text: v.noise_evidence, idx: v.noise_review_index },
+                        { label: "Wifi", text: v.wifi_evidence, idx: v.wifi_review_index },
+                        { label: "Outlets", text: v.outlets_evidence, idx: v.outlets_review_index },
+                        { label: "Studying", text: v.studying_evidence, idx: v.studying_review_index },
+                      ];
+
                       return (
                         <div className="mt-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
                           <div className="flex items-center justify-between text-xs">
@@ -429,10 +474,7 @@ export default function Home() {
                               View evidence
                             </summary>
                             <ul className="mt-1 space-y-1 pl-4 list-disc">
-                              <li>Noise: {v.noise_evidence}</li>
-                              <li>Wifi: {v.wifi_evidence}</li>
-                              <li>Outlets: {v.outlets_evidence}</li>
-                              <li>Studying: {v.studying_evidence}</li>
+                              {evidenceItems.map((item) => renderEvidenceItem(item, v.review_urls))}
                             </ul>
                           </details>
 
