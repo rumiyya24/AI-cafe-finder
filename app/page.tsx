@@ -66,6 +66,7 @@ export default function Home() {
   const [filterNoise, setFilterNoise] = useState("");
   const [filterWifi, setFilterWifi] = useState("");
   const [filterStudying, setFilterStudying] = useState("");
+  const [compareSelection, setCompareSelection] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/favorites")
@@ -171,6 +172,17 @@ export default function Home() {
       });
       setFavorites((prev) => new Set(prev).add(cafe.id));
     }
+  }
+  function toggleCompare(cafeId: string) {
+    setCompareSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(cafeId)) {
+        next.delete(cafeId);
+      } else if (next.size < 4) {
+        next.add(cafeId);
+      }
+      return next;
+    });
   }
 
   function startEditingNote(cafe: Cafe) {
@@ -363,6 +375,14 @@ export default function Home() {
                     </button>
                   </div>
                   <p className="text-sm text-neutral-500">{cafe.formattedAddress}</p>
+                  <label className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
+                    <input
+                      type="checkbox"
+                      checked={compareSelection.has(cafe.id)}
+                      onChange={() => toggleCompare(cafe.id)}
+                    />
+                    Compare
+                  </label>
                   {cafe.rating && (
                     <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                       ⭐ {cafe.rating} ({cafe.userRatingCount} reviews)
@@ -561,6 +581,18 @@ export default function Home() {
       <div className="max-w-2xl w-full mt-10">
         <CafeMap cafes={cafes} />
       </div>
+
+      {compareSelection.size >= 2 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-5 py-3 rounded-full shadow-lg flex items-center gap-3">
+          <span className="text-sm">{compareSelection.size} selected</span>
+          <Link
+            href={`/compare?ids=${Array.from(compareSelection).join(",")}`}
+            className="text-sm font-semibold underline"
+          >
+            Compare
+          </Link>
+        </div>
+      )}
     </main>
   );
 }
