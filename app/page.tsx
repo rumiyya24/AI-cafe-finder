@@ -22,6 +22,7 @@ type VibeInfo = {
   outlets_evidence: string;
   good_for_studying: string;
   studying_evidence: string;
+  data_source?: string;
 };
 
 type NoteInfo = {
@@ -115,8 +116,14 @@ export default function Home() {
   async function checkVibe(cafeId: string) {
     setVibeData((prev) => ({ ...prev, [cafeId]: "loading" }));
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     try {
-      const response = await fetch(`/api/places/${cafeId}/vibe`);
+      const response = await fetch(`/api/places/${cafeId}/vibe`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (!response.ok) {
@@ -343,46 +350,100 @@ export default function Home() {
 
                   {vibeData[cafe.id] &&
                     vibeData[cafe.id] !== "loading" &&
-                    vibeData[cafe.id] !== "error" && (
-                      <div className="mt-2">
-                        <div className="flex flex-wrap gap-2 text-xs">
-                          <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                            🔊 {notes[cafe.id]?.noise_level || (vibeData[cafe.id] as VibeInfo).noise_level}
-                            {notes[cafe.id]?.noise_level && " ✓"}
-                          </span>
-                          <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                            📶 wifi: {notes[cafe.id]?.wifi || (vibeData[cafe.id] as VibeInfo).wifi}
-                            {notes[cafe.id]?.wifi && " ✓"}
-                          </span>
-                          <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                            🔌 outlets: {notes[cafe.id]?.outlets || (vibeData[cafe.id] as VibeInfo).outlets}
-                            {notes[cafe.id]?.outlets && " ✓"}
-                          </span>
-                          <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                            📚 studying: {notes[cafe.id]?.good_for_studying || (vibeData[cafe.id] as VibeInfo).good_for_studying}
-                            {notes[cafe.id]?.good_for_studying && " ✓"}
-                          </span>
+                    vibeData[cafe.id] !== "error" && (() => {
+                      const v = vibeData[cafe.id] as VibeInfo;
+                      const effectiveNoise = notes[cafe.id]?.noise_level || v.noise_level;
+                      const effectiveWifi = notes[cafe.id]?.wifi || v.wifi;
+                      const effectiveOutlets = notes[cafe.id]?.outlets || v.outlets;
+                      const effectiveStudying = notes[cafe.id]?.good_for_studying || v.good_for_studying;
+
+                      const noiseSteps = { quiet: 1, moderate: 2, loud: 3, unknown: 0 };
+                      const noiseLevel = noiseSteps[effectiveNoise as keyof typeof noiseSteps] ?? 0;
+
+                      const recommendedFor: string[] = [];
+                      if (effectiveStudying === "yes") recommendedFor.push("Studying");
+                      if (effectiveWifi === "yes") recommendedFor.push("Remote work");
+                      if (effectiveNoise === "quiet") recommendedFor.push("Focus / deep work");
+
+                      return (
+                        <div className="mt-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-neutral-600 dark:text-neutral-400">
+                              🔊 Noise{notes[cafe.id]?.noise_level && " (your note)"}
+                            </span>
+                            <span className="flex gap-0.5">
+                              {[1, 2, 3].map((step) => (
+                                <span
+                                  key={step}
+                                  className={`w-4 h-2 rounded-sm ${
+                                    step <= noiseLevel
+                                      ? "bg-neutral-700 dark:bg-neutral-300"
+                                      : "bg-neutral-200 dark:bg-neutral-700"
+                                  }`}
+                                />
+                              ))}
+                              <span className="ml-1 text-neutral-500">{effectiveNoise}</span>
+                            </span>
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between text-xs">
+                            <span className="text-neutral-600 dark:text-neutral-400">
+                              📶 Wifi{notes[cafe.id]?.wifi && " (your note)"}
+                            </span>
+                            <span className="text-neutral-500">{effectiveWifi}</span>
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between text-xs">
+                            <span className="text-neutral-600 dark:text-neutral-400">
+                              🔌 Outlets{notes[cafe.id]?.outlets && " (your note)"}
+                            </span>
+                            <span className="text-neutral-500">{effectiveOutlets}</span>
+                          </div>
+
+                          {v.data_source === "ai_estimate" && (
+                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
+                              ⚠️ No reviews available — this is a general AI estimate, not confirmed by real reviews.
+                            </p>
+                          )}
+
+                          {recommendedFor.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-800">
+                              <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">
+                                Recommended for
+                              </p>
+                              <div className="flex flex-wrap gap-1">
+                                {recommendedFor.map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="px-2 py-0.5 rounded-full bg-neutral-200 dark:bg-neutral-800 text-xs text-neutral-700 dark:text-neutral-300"
+                                  >
+                                    ✓ {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <details className="mt-3 text-xs text-neutral-500">
+                            <summary className="cursor-pointer underline">
+                              View evidence
+                            </summary>
+                            <ul className="mt-1 space-y-1 pl-4 list-disc">
+                              <li>Noise: {v.noise_evidence}</li>
+                              <li>Wifi: {v.wifi_evidence}</li>
+                              <li>Outlets: {v.outlets_evidence}</li>
+                              <li>Studying: {v.studying_evidence}</li>
+                            </ul>
+                          </details>
+
+                          {notes[cafe.id]?.personal_note && (
+                            <p className="mt-2 text-xs italic text-neutral-500">
+                              Your note: {notes[cafe.id]?.personal_note}
+                            </p>
+                          )}
                         </div>
-
-                        <details className="mt-2 text-xs text-neutral-500">
-                          <summary className="cursor-pointer underline">
-                            View evidence
-                          </summary>
-                          <ul className="mt-1 space-y-1 pl-4 list-disc">
-                            <li>Noise: {(vibeData[cafe.id] as VibeInfo).noise_evidence}</li>
-                            <li>Wifi: {(vibeData[cafe.id] as VibeInfo).wifi_evidence}</li>
-                            <li>Outlets: {(vibeData[cafe.id] as VibeInfo).outlets_evidence}</li>
-                            <li>Studying: {(vibeData[cafe.id] as VibeInfo).studying_evidence}</li>
-                          </ul>
-                        </details>
-
-                        {notes[cafe.id]?.personal_note && (
-                          <p className="mt-2 text-xs italic text-neutral-500">
-                            Your note: {notes[cafe.id]?.personal_note}
-                          </p>
-                        )}
-                      </div>
-                    )}
+                      );
+                    })()}
 
                   {editingNote === cafe.id ? (
                     <div className="mt-2 space-y-2 p-3 rounded border border-neutral-200 dark:border-neutral-800">

@@ -16,10 +16,12 @@ const VIBE_SCHEMA = {
     outlets_evidence: { type: Type.STRING },
     good_for_studying: { type: Type.STRING, enum: ["yes", "no", "unknown"] },
     studying_evidence: { type: Type.STRING },
+    data_source: { type: Type.STRING, enum: ["reviews", "ai_estimate"] },
   },
   required: [
     "noise_level", "noise_evidence", "wifi", "wifi_evidence",
     "outlets", "outlets_evidence", "good_for_studying", "studying_evidence",
+    "data_source",
   ],
 };
 
@@ -45,6 +47,7 @@ export async function GET(
       outlets_evidence: cached.outlets_evidence,
       good_for_studying: cached.good_for_studying,
       studying_evidence: cached.studying_evidence,
+      data_source: cached.data_source || "reviews",
     });
   }
 
@@ -63,7 +66,8 @@ export async function GET(
     {
       headers: {
         "X-Goog-Api-Key": placesKey,
-        "X-Goog-FieldMask": "reviews",
+        "X-Goog-FieldMask":
+          "reviews,editorialSummary,generativeSummary,displayName,formattedAddress,primaryType",
       },
     }
   );
@@ -71,7 +75,7 @@ export async function GET(
   if (!placeResponse.ok) {
     const errorBody = await placeResponse.text();
     return Response.json(
-      { error: "Failed to fetch place reviews", details: errorBody },
+      { error: "Failed to fetch place details", details: errorBody },
       { status: placeResponse.status }
     );
   }
@@ -79,25 +83,30 @@ export async function GET(
   const placeData = await placeResponse.json();
   const reviews: Review[] = placeData.reviews || [];
 
+  const textSources: string[] = [];
+
+  if (reviews.length > 0) {
+    textSources.push(
+      reviews.map((r, i) => `Review ${i + 1}: ${r.text?.text || ""}`).join("\n\n")
+    );
+  }
+
+  const editorialSummary = placeData.editorialSummary?.text;
+  if (editorialSummary) {
+    textSources.push(`Editorial summary: ${editorialSummary}`);
+  }
+
+  const generativeSummary = placeData.generativeSummary?.overview?.text;
+  if (generativeSummary) {
+    textSources.push(`AI-generated summary: ${generativeSummary}`);
+  }
+
+  const ai = new GoogleGenAI({ apiKey: geminiKey });
   let vibeResult;
 
-  if (reviews.length === 0) {
-    vibeResult = {
-      noise_level: "unknown",
-      noise_evidence: "No reviews available",
-      wifi: "unknown",
-      wifi_evidence: "No reviews available",
-      outlets: "unknown",
-      outlets_evidence: "No reviews available",
-      good_for_studying: "unknown",
-      studying_evidence: "No reviews available",
-    };
-  } else {
-    const reviewText = reviews
-      .map((r, i) => `Review ${i + 1}: ${r.text?.text || ""}`)
-      .join("\n\n");
-
-    const ai = new GoogleGenAI({ apiKey: geminiKey });
+  if (textSources.length > 0) {
+    // Path A: real reviews/summaries exist -- extract with evidence
+    const reviewText = textSources.join("\n\n");
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
@@ -110,8 +119,41 @@ export async function GET(
 
 For each attribute, also provide a short quote or close paraphrase from the actual review text as evidence. If unknown, say "Not mentioned in reviews" as the evidence.
 
+Set data_source to "reviews".
+
 Reviews:
 ${reviewText}`,
+            },
+          ],
+        },
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: VIBE_SCHEMA,
+      },
+    });
+
+    vibeResult = JSON.parse(response.text || "{}");
+  } else {
+    // Path B: no reviews or summaries -- ask for a general, honestly-labeled estimate
+    const cafeName = placeData.displayName?.text || "this cafe";
+    const address = placeData.formattedAddress || "an unknown location";
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `You have no reviews or descriptions available for this cafe. Based only on general knowledge of what cafes of this type are typically like, and the name/location given, provide your best reasonable general estimate for each attribute -- but only if you can genuinely justify a typical pattern. If you have no reasonable basis to guess even generally, use "unknown" rather than making something up.
+
+For each evidence field, explain briefly what general reasoning led to your estimate (e.g. "chain coffee shops of this type typically offer wifi"), or say "No basis for even a general estimate" if marked unknown.
+
+Set data_source to "ai_estimate".
+
+Cafe name: ${cafeName}
+Address: ${address}`,
             },
           ],
         },
