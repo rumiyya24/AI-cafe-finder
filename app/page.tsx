@@ -372,7 +372,7 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center bg-background">
       <header className="w-full border-b border-line sticky top-0 z-40 bg-background/90 backdrop-blur">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-extrabold text-espresso tracking-tight">
             <span className="w-8 h-8 rounded-[10px] bg-coffee text-white flex items-center justify-center">
               <Coffee size={18} />
@@ -435,7 +435,7 @@ export default function Home() {
       </div>
 
       {cafes.length > 0 && (
-        <div className="max-w-2xl w-full px-6 mt-6 flex flex-wrap gap-2 items-center justify-center text-sm">
+        <div className="max-w-5xl w-full px-6 mt-6 flex flex-wrap gap-2 items-center justify-center text-sm">
           <div className="flex items-center gap-1.5 bg-white dark:bg-crema border border-line rounded-lg px-2 py-1.5">
             <Volume2 size={14} className="text-coffee" />
             <select
@@ -476,7 +476,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="max-w-2xl w-full px-6 mt-4">
+      <div className="max-w-5xl w-full px-6 mt-4 pb-16">
         {loading && (
           <p className="text-center text-muted">Searching...</p>
         )}
@@ -486,275 +486,275 @@ export default function Home() {
         )}
 
         {!loading && !error && cafes.length > 0 && (
-          <>
-            {filtersActive && (
-              <p className="text-center text-xs text-muted mb-3">
-                Showing {filteredCafes.length} of {cafes.length} results
-                ({checkedCount} vibe-checked -- check more cafes to include them in filtering)
-              </p>
-            )}
+          <div className="grid md:grid-cols-2 gap-6 items-start">
+            <div>
+              {filtersActive && (
+                <p className="text-center text-xs text-muted mb-3">
+                  Showing {filteredCafes.length} of {cafes.length} results
+                  ({checkedCount} vibe-checked -- check more cafes to include them in filtering)
+                </p>
+              )}
 
-            {filtersActive && checkedCount === 0 && (
-              <p className="text-center text-muted">
-                Filters only apply to cafes you&apos;ve checked the vibe for.
-                Click &quot;Check vibe&quot; on a few results below, then your
-                filters will start working.
-              </p>
-            )}
+              {filtersActive && checkedCount === 0 && (
+                <p className="text-center text-muted">
+                  Filters only apply to cafes you&apos;ve checked the vibe for.
+                  Click &quot;Check vibe&quot; on a few results below, then your
+                  filters will start working.
+                </p>
+              )}
 
-            {filtersActive && checkedCount > 0 && filteredCafes.length === 0 && (
-              <p className="text-center text-muted">
-                None of your checked cafes match these filters yet. Try checking more, or clear filters.
-              </p>
-            )}
+              {filtersActive && checkedCount > 0 && filteredCafes.length === 0 && (
+                <p className="text-center text-muted">
+                  None of your checked cafes match these filters yet. Try checking more, or clear filters.
+                </p>
+              )}
 
-            <ul className="space-y-4">
-              {filteredCafes.map((cafe) => (
-                <li
-                  key={cafe.id}
-                  className="p-4 rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel transition-shadow"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-bold text-espresso">
-                      {cafe.displayName.text}
-                    </h2>
-                    <button
-                      onClick={() => toggleFavorite(cafe)}
-                      aria-label={favorites.has(cafe.id) ? "Remove favorite" : "Add favorite"}
-                      className="shrink-0"
-                    >
-                      <Heart
-                        size={20}
-                        className={favorites.has(cafe.id) ? "fill-red-500 text-red-500" : "text-muted"}
-                      />
-                    </button>
-                  </div>
-                  <p className="text-sm text-muted">{cafe.formattedAddress}</p>
-                  <label className="mt-1 flex items-center gap-1.5 text-xs text-muted">
-                    <input
-                      type="checkbox"
-                      checked={compareSelection.has(cafe.id)}
-                      onChange={() => toggleCompare(cafe.id)}
-                    />
-                    Compare
-                  </label>
-                  {cafe.rating && (
-                    <p className="flex items-center gap-1 text-sm text-amber font-semibold mt-1">
-                      <Star size={14} className="fill-amber text-amber" />
-                      {cafe.rating} ({cafe.userRatingCount} reviews)
-                    </p>
-                  )}
-
-                  {!vibeData[cafe.id] && (
-                    <button
-                      onClick={() => checkVibe(cafe.id)}
-                      className="mt-2 text-sm text-coffee underline"
-                    >
-                      Check vibe
-                    </button>
-                  )}
-
-                  {vibeData[cafe.id] === "loading" && (
-                    <p className="mt-2 text-sm text-muted">Checking vibe...</p>
-                  )}
-
-                  {vibeData[cafe.id] === "error" && (
-                    <p className="mt-2 text-sm text-red-500">Couldn&apos;t check vibe</p>
-                  )}
-
-                  {vibeData[cafe.id] &&
-                    vibeData[cafe.id] !== "loading" &&
-                    vibeData[cafe.id] !== "error" && (() => {
-                      const v = vibeData[cafe.id] as VibeInfo;
-                      const effectiveNoise = notes[cafe.id]?.noise_level || v.noise_level;
-                      const effectiveWifi = notes[cafe.id]?.wifi || v.wifi;
-                      const effectiveOutlets = notes[cafe.id]?.outlets || v.outlets;
-                      const effectiveStudying = notes[cafe.id]?.good_for_studying || v.good_for_studying;
-
-                      const noiseSteps = { quiet: 1, moderate: 2, loud: 3, unknown: 0 };
-                      const noiseLevel = noiseSteps[effectiveNoise as keyof typeof noiseSteps] ?? 0;
-
-                      const recommendedFor: string[] = [];
-                      if (effectiveStudying === "yes") recommendedFor.push("Studying");
-                      if (effectiveWifi === "yes") recommendedFor.push("Remote work");
-                      if (effectiveNoise === "quiet") recommendedFor.push("Focus / deep work");
-
-                      const evidenceItems: EvidenceItem[] = [
-                        { label: "Noise", text: v.noise_evidence, idx: v.noise_review_index },
-                        { label: "Wifi", text: v.wifi_evidence, idx: v.wifi_review_index },
-                        { label: "Outlets", text: v.outlets_evidence, idx: v.outlets_review_index },
-                        { label: "Studying", text: v.studying_evidence, idx: v.studying_review_index },
-                      ];
-
-                      return (
-                        <div className="mt-3 p-3 rounded-xl bg-crema/60 dark:bg-crema border border-line">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="flex items-center gap-1.5 text-muted">
-                              <Volume2 size={13} className="text-coffee" />
-                              Noise{notes[cafe.id]?.noise_level && " (your note)"}
-                            </span>
-                            <span className="flex items-center gap-0.5">
-                              {[1, 2, 3].map((step) => (
-                                <span
-                                  key={step}
-                                  className={`w-4 h-2 rounded-sm ${
-                                    step <= noiseLevel ? "bg-coffee" : "bg-line"
-                                  }`}
-                                />
-                              ))}
-                              <span className="ml-1 text-muted">{effectiveNoise}</span>
-                            </span>
-                          </div>
-
-                          <div className="mt-2 flex items-center justify-between text-xs">
-                            <span className="flex items-center gap-1.5 text-muted">
-                              <Wifi size={13} className="text-coffee" />
-                              Wifi{notes[cafe.id]?.wifi && " (your note)"}
-                            </span>
-                            <span className="text-muted">{effectiveWifi}</span>
-                          </div>
-
-                          <div className="mt-2 flex items-center justify-between text-xs">
-                            <span className="flex items-center gap-1.5 text-muted">
-                              <Plug size={13} className="text-coffee" />
-                              Outlets{notes[cafe.id]?.outlets && " (your note)"}
-                            </span>
-                            <span className="text-muted">{effectiveOutlets}</span>
-                          </div>
-
-                          {(() => {
-                            const match = getMatchScore(cafe.id);
-                            if (!match) return null;
-                            return (
-                              <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-line">
-                                <span className="flex items-center gap-1.5 text-muted">
-                                  <Scale size={13} className="text-coffee" />
-                                  Match for your preferences
-                                </span>
-                                <span className="font-semibold text-espresso">
-                                  {match.percent}% ({match.matched}/{match.total})
-                                </span>
-                              </div>
-                            );
-                          })()}
-
-                          {v.data_source === "ai_estimate" && (
-                            <p className="flex items-start gap-1.5 mt-2 text-xs text-amber">
-                              <AlertTriangle size={13} className="shrink-0 mt-0.5" />
-                              No reviews available — this is a general AI estimate, not confirmed by real reviews.
-                            </p>
-                          )}
-
-                          {recommendedFor.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-line">
-                              <p className="text-xs text-muted mb-1.5">Recommended for</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {recommendedFor.map((tag) => (
-                                  <span
-                                    key={tag}
-                                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green/15 text-xs text-green font-medium"
-                                  >
-                                    <CheckCircle2 size={12} />
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          <details className="mt-3 text-xs text-muted">
-                            <summary className="cursor-pointer underline">
-                              View evidence
-                            </summary>
-                            <ul className="mt-1 space-y-1 pl-4 list-disc">
-                              {evidenceItems.map((item) => renderEvidenceItem(item, v.review_urls))}
-                            </ul>
-                          </details>
-
-                          {notes[cafe.id]?.personal_note && (
-                            <p className="mt-2 text-xs italic text-muted">
-                              Your note: {notes[cafe.id]?.personal_note}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                  {editingNote === cafe.id ? (
-                    <div className="mt-2 space-y-2 p-3 rounded-xl border border-line bg-crema/40">
-                      <input
-                        type="text"
-                        placeholder="Noise (e.g. quiet)"
-                        value={noteDraft.noise_level}
-                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, noise_level: e.target.value }))}
-                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Wifi (e.g. yes)"
-                        value={noteDraft.wifi}
-                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, wifi: e.target.value }))}
-                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Outlets (e.g. yes)"
-                        value={noteDraft.outlets}
-                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, outlets: e.target.value }))}
-                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Good for studying (e.g. yes)"
-                        value={noteDraft.good_for_studying}
-                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, good_for_studying: e.target.value }))}
-                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
-                      />
-                      <textarea
-                        placeholder="Personal note"
-                        value={noteDraft.personal_note}
-                        onChange={(e) => setNoteDraft((prev) => ({ ...prev, personal_note: e.target.value }))}
-                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => saveNote(cafe)}
-                          className="text-sm px-3 py-1.5 rounded-lg bg-coffee text-white hover:bg-espresso transition-colors"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingNote(null)}
-                          className="text-sm px-3 py-1.5 rounded-lg border border-line text-muted"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+              <ul className="space-y-4">
+                {filteredCafes.map((cafe) => (
+                  <li
+                    key={cafe.id}
+                    className="p-4 rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-bold text-espresso">
+                        {cafe.displayName.text}
+                      </h2>
+                      <button
+                        onClick={() => toggleFavorite(cafe)}
+                        aria-label={favorites.has(cafe.id) ? "Remove favorite" : "Add favorite"}
+                        className="shrink-0"
+                      >
+                        <Heart
+                          size={20}
+                          className={favorites.has(cafe.id) ? "fill-red-500 text-red-500" : "text-muted"}
+                        />
+                      </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => startEditingNote(cafe)}
-                      className="mt-2 text-sm text-coffee underline block"
-                    >
-                      {notes[cafe.id] ? "Edit your note" : "Add your note"}
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </>
+                    <p className="text-sm text-muted">{cafe.formattedAddress}</p>
+                    <label className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+                      <input
+                        type="checkbox"
+                        checked={compareSelection.has(cafe.id)}
+                        onChange={() => toggleCompare(cafe.id)}
+                      />
+                      Compare
+                    </label>
+                    {cafe.rating && (
+                      <p className="flex items-center gap-1 text-sm text-amber font-semibold mt-1">
+                        <Star size={14} className="fill-amber text-amber" />
+                        {cafe.rating} ({cafe.userRatingCount} reviews)
+                      </p>
+                    )}
+
+                    {!vibeData[cafe.id] && (
+                      <button
+                        onClick={() => checkVibe(cafe.id)}
+                        className="mt-2 text-sm text-coffee underline"
+                      >
+                        Check vibe
+                      </button>
+                    )}
+
+                    {vibeData[cafe.id] === "loading" && (
+                      <p className="mt-2 text-sm text-muted">Checking vibe...</p>
+                    )}
+
+                    {vibeData[cafe.id] === "error" && (
+                      <p className="mt-2 text-sm text-red-500">Couldn&apos;t check vibe</p>
+                    )}
+
+                    {vibeData[cafe.id] &&
+                      vibeData[cafe.id] !== "loading" &&
+                      vibeData[cafe.id] !== "error" && (() => {
+                        const v = vibeData[cafe.id] as VibeInfo;
+                        const effectiveNoise = notes[cafe.id]?.noise_level || v.noise_level;
+                        const effectiveWifi = notes[cafe.id]?.wifi || v.wifi;
+                        const effectiveOutlets = notes[cafe.id]?.outlets || v.outlets;
+                        const effectiveStudying = notes[cafe.id]?.good_for_studying || v.good_for_studying;
+
+                        const noiseSteps = { quiet: 1, moderate: 2, loud: 3, unknown: 0 };
+                        const noiseLevel = noiseSteps[effectiveNoise as keyof typeof noiseSteps] ?? 0;
+
+                        const recommendedFor: string[] = [];
+                        if (effectiveStudying === "yes") recommendedFor.push("Studying");
+                        if (effectiveWifi === "yes") recommendedFor.push("Remote work");
+                        if (effectiveNoise === "quiet") recommendedFor.push("Focus / deep work");
+
+                        const evidenceItems: EvidenceItem[] = [
+                          { label: "Noise", text: v.noise_evidence, idx: v.noise_review_index },
+                          { label: "Wifi", text: v.wifi_evidence, idx: v.wifi_review_index },
+                          { label: "Outlets", text: v.outlets_evidence, idx: v.outlets_review_index },
+                          { label: "Studying", text: v.studying_evidence, idx: v.studying_review_index },
+                        ];
+
+                        return (
+                          <div className="mt-3 p-3 rounded-xl bg-crema/60 dark:bg-crema border border-line">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="flex items-center gap-1.5 text-muted">
+                                <Volume2 size={13} className="text-coffee" />
+                                Noise{notes[cafe.id]?.noise_level && " (your note)"}
+                              </span>
+                              <span className="flex items-center gap-0.5">
+                                {[1, 2, 3].map((step) => (
+                                  <span
+                                    key={step}
+                                    className={`w-4 h-2 rounded-sm ${
+                                      step <= noiseLevel ? "bg-coffee" : "bg-line"
+                                    }`}
+                                  />
+                                ))}
+                                <span className="ml-1 text-muted">{effectiveNoise}</span>
+                              </span>
+                            </div>
+
+                            <div className="mt-2 flex items-center justify-between text-xs">
+                              <span className="flex items-center gap-1.5 text-muted">
+                                <Wifi size={13} className="text-coffee" />
+                                Wifi{notes[cafe.id]?.wifi && " (your note)"}
+                              </span>
+                              <span className="text-muted">{effectiveWifi}</span>
+                            </div>
+
+                            <div className="mt-2 flex items-center justify-between text-xs">
+                              <span className="flex items-center gap-1.5 text-muted">
+                                <Plug size={13} className="text-coffee" />
+                                Outlets{notes[cafe.id]?.outlets && " (your note)"}
+                              </span>
+                              <span className="text-muted">{effectiveOutlets}</span>
+                            </div>
+
+                            {(() => {
+                              const match = getMatchScore(cafe.id);
+                              if (!match) return null;
+                              return (
+                                <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-line">
+                                  <span className="flex items-center gap-1.5 text-muted">
+                                    <Scale size={13} className="text-coffee" />
+                                    Match for your preferences
+                                  </span>
+                                  <span className="font-semibold text-espresso">
+                                    {match.percent}% ({match.matched}/{match.total})
+                                  </span>
+                                </div>
+                              );
+                            })()}
+
+                            {v.data_source === "ai_estimate" && (
+                              <p className="flex items-start gap-1.5 mt-2 text-xs text-amber">
+                                <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+                                No reviews available — this is a general AI estimate, not confirmed by real reviews.
+                              </p>
+                            )}
+
+                            {recommendedFor.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-line">
+                                <p className="text-xs text-muted mb-1.5">Recommended for</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {recommendedFor.map((tag) => (
+                                    <span
+                                      key={tag}
+                                      className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green/15 text-xs text-green font-medium"
+                                    >
+                                      <CheckCircle2 size={12} />
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <details className="mt-3 text-xs text-muted">
+                              <summary className="cursor-pointer underline">
+                                View evidence
+                              </summary>
+                              <ul className="mt-1 space-y-1 pl-4 list-disc">
+                                {evidenceItems.map((item) => renderEvidenceItem(item, v.review_urls))}
+                              </ul>
+                            </details>
+
+                            {notes[cafe.id]?.personal_note && (
+                              <p className="mt-2 text-xs italic text-muted">
+                                Your note: {notes[cafe.id]?.personal_note}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                    {editingNote === cafe.id ? (
+                      <div className="mt-2 space-y-2 p-3 rounded-xl border border-line bg-crema/40">
+                        <input
+                          type="text"
+                          placeholder="Noise (e.g. quiet)"
+                          value={noteDraft.noise_level}
+                          onChange={(e) => setNoteDraft((prev) => ({ ...prev, noise_level: e.target.value }))}
+                          className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Wifi (e.g. yes)"
+                          value={noteDraft.wifi}
+                          onChange={(e) => setNoteDraft((prev) => ({ ...prev, wifi: e.target.value }))}
+                          className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Outlets (e.g. yes)"
+                          value={noteDraft.outlets}
+                          onChange={(e) => setNoteDraft((prev) => ({ ...prev, outlets: e.target.value }))}
+                          className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Good for studying (e.g. yes)"
+                          value={noteDraft.good_for_studying}
+                          onChange={(e) => setNoteDraft((prev) => ({ ...prev, good_for_studying: e.target.value }))}
+                          className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
+                        />
+                        <textarea
+                          placeholder="Personal note"
+                          value={noteDraft.personal_note}
+                          onChange={(e) => setNoteDraft((prev) => ({ ...prev, personal_note: e.target.value }))}
+                          className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveNote(cafe)}
+                            className="text-sm px-3 py-1.5 rounded-lg bg-coffee text-white hover:bg-espresso transition-colors"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingNote(null)}
+                            className="text-sm px-3 py-1.5 rounded-lg border border-line text-muted"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => startEditingNote(cafe)}
+                        className="mt-2 text-sm text-coffee underline block"
+                      >
+                        {notes[cafe.id] ? "Edit your note" : "Add your note"}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="order-first md:order-last md:sticky md:top-20 rounded-2xl border border-line shadow-sm overflow-hidden">
+              <CafeMap cafes={cafes} />
+            </div>
+          </div>
         )}
         {!loading && !error && hasSearched && cafes.length === 0 && (
           <p className="text-center text-muted">
             No cafes found. Try a different search.
           </p>
         )}
-      </div>
-
-      <div className="max-w-2xl w-full px-6 mt-10 pb-16">
-        <div className="rounded-2xl border border-line shadow-sm overflow-hidden">
-          <CafeMap cafes={cafes} />
-        </div>
       </div>
 
       <Concierge onSearch={handleConciergeSearch} />
