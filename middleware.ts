@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const PROTECTED_API_PATHS = ["/api/favorites", "/api/notes", "/api/preferences"];
+
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const method = request.method;
+
+  const isProtectedWrite =
+    method !== "GET" &&
+    PROTECTED_API_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+
+  if (!isProtectedWrite) {
+    return NextResponse.next();
+  }
+
   const username = process.env.SITE_USERNAME;
   const password = process.env.SITE_PASSWORD;
 
@@ -28,5 +41,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/((?!_next/static|_next/image|favicon.ico).*)",
+  matcher: "/api/:path*",
 };
