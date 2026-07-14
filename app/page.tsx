@@ -99,6 +99,39 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  const suggestedPrompts = [
+    { emoji: "☕", label: "Best study cafes", query: "best cafes for studying" },
+    { emoji: "💻", label: "I have a Zoom meeting", query: "quiet cafe with good wifi for video calls" },
+    { emoji: "📖", label: "Somewhere for 5 hours", query: "cafe good for long work sessions" },
+    { emoji: "🌧", label: "Cozy rainy-day cafes", query: "cozy warm cafe" },
+  ];
+
+  async function runSearch(searchQuery: string) {
+    setQuery(searchQuery);
+    setLoading(true);
+    setError(null);
+    setHasSearched(true);
+    setFilterNoise("");
+    setFilterWifi("");
+    setFilterStudying("");
+
+    try {
+      const response = await fetch(`/api/places?q=${encodeURIComponent(searchQuery)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Search failed");
+      }
+
+      setCafes(data.places || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setCafes([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!query.trim()) return;
@@ -289,6 +322,20 @@ export default function Home() {
             className="w-full px-5 py-3 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
           />
         </form>
+
+        {!hasSearched && (
+          <div className="mt-4 flex flex-wrap gap-2 justify-center">
+            {suggestedPrompts.map((prompt) => (
+              <button
+                key={prompt.label}
+                onClick={() => runSearch(prompt.query)}
+                className="text-sm px-3 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+              >
+                {prompt.emoji} {prompt.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {cafes.length > 0 && (
