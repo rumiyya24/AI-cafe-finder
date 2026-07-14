@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ArrowLeft, Heart, Volume2, Wifi, Plug, BookOpen } from "lucide-react";
 
 type Favorite = {
   place_id: string;
@@ -106,25 +107,23 @@ export default function FavoritesPage() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-16 bg-white dark:bg-neutral-950">
+    <main className="min-h-screen px-6 py-16 bg-background">
       <div className="max-w-2xl mx-auto">
-        <Link
-          href="/"
-          className="text-sm text-neutral-500 underline"
-        >
-          ← Back to search
+        <Link href="/" className="flex items-center gap-1.5 text-sm text-muted hover:text-espresso">
+          <ArrowLeft size={15} /> Back to search
         </Link>
 
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white mt-4">
+        <h1 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight text-espresso mt-4">
+          <Heart size={26} className="fill-red-500 text-red-500" />
           Your Favorites
         </h1>
 
         {loading && (
-          <p className="mt-8 text-center text-neutral-500">Loading...</p>
+          <p className="mt-8 text-center text-muted">Loading...</p>
         )}
 
         {!loading && favorites.length === 0 && (
-          <p className="mt-8 text-center text-neutral-500">
+          <p className="mt-8 text-center text-muted">
             No favorites yet. Search for cafes and tap the heart to save one.
           </p>
         )}
@@ -134,106 +133,126 @@ export default function FavoritesPage() {
             {favorites.map((favorite) => (
               <li
                 key={favorite.place_id}
-                className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800"
+                className="p-4 rounded-2xl border border-line bg-white dark:bg-crema shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-semibold text-neutral-900 dark:text-white">
+                  <h2 className="font-bold text-espresso">
                     {favorite.cafe_name}
                   </h2>
                   <button
                     onClick={() => removeFavorite(favorite.place_id)}
                     aria-label="Remove favorite"
-                    className="text-xl leading-none shrink-0"
+                    className="shrink-0"
                   >
-                    ❤️
+                    <Heart size={20} className="fill-red-500 text-red-500" />
                   </button>
                 </div>
-                <p className="text-sm text-neutral-500">{favorite.cafe_address}</p>
-                <p className="text-xs text-neutral-400 mt-1">
+                <p className="text-sm text-muted">{favorite.cafe_address}</p>
+                <p className="text-xs text-muted mt-1">
                   Favorited {new Date(favorite.created_at).toLocaleDateString()}
                 </p>
 
                 {(notes[favorite.place_id] || vibes[favorite.place_id]) && (
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <div className="mt-3 p-3 rounded-xl bg-crema/60 dark:bg-crema border border-line space-y-2 text-xs">
                     {(notes[favorite.place_id]?.noise_level || vibes[favorite.place_id]?.noise_level) && (
-                      <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        🔊 {notes[favorite.place_id]?.noise_level || vibes[favorite.place_id]?.noise_level}
-                        {notes[favorite.place_id]?.noise_level && " ✓"}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted">
+                          <Volume2 size={13} className="text-coffee" /> Noise
+                        </span>
+                        <span className="text-muted">
+                          {notes[favorite.place_id]?.noise_level || vibes[favorite.place_id]?.noise_level}
+                          {notes[favorite.place_id]?.noise_level && " (your note)"}
+                        </span>
+                      </div>
                     )}
                     {(notes[favorite.place_id]?.wifi || vibes[favorite.place_id]?.wifi) && (
-                      <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        📶 wifi: {notes[favorite.place_id]?.wifi || vibes[favorite.place_id]?.wifi}
-                        {notes[favorite.place_id]?.wifi && " ✓"}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted">
+                          <Wifi size={13} className="text-coffee" /> Wifi
+                        </span>
+                        <span className="text-muted">
+                          {notes[favorite.place_id]?.wifi || vibes[favorite.place_id]?.wifi}
+                          {notes[favorite.place_id]?.wifi && " (your note)"}
+                        </span>
+                      </div>
                     )}
                     {(notes[favorite.place_id]?.outlets || vibes[favorite.place_id]?.outlets) && (
-                      <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        🔌 outlets: {notes[favorite.place_id]?.outlets || vibes[favorite.place_id]?.outlets}
-                        {notes[favorite.place_id]?.outlets && " ✓"}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted">
+                          <Plug size={13} className="text-coffee" /> Outlets
+                        </span>
+                        <span className="text-muted">
+                          {notes[favorite.place_id]?.outlets || vibes[favorite.place_id]?.outlets}
+                          {notes[favorite.place_id]?.outlets && " (your note)"}
+                        </span>
+                      </div>
                     )}
                     {(notes[favorite.place_id]?.good_for_studying || vibes[favorite.place_id]?.good_for_studying) && (
-                      <span className="px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        📚 studying: {notes[favorite.place_id]?.good_for_studying || vibes[favorite.place_id]?.good_for_studying}
-                        {notes[favorite.place_id]?.good_for_studying && " ✓"}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted">
+                          <BookOpen size={13} className="text-coffee" /> Studying
+                        </span>
+                        <span className="text-muted">
+                          {notes[favorite.place_id]?.good_for_studying || vibes[favorite.place_id]?.good_for_studying}
+                          {notes[favorite.place_id]?.good_for_studying && " (your note)"}
+                        </span>
+                      </div>
                     )}
                   </div>
                 )}
 
                 {notes[favorite.place_id]?.personal_note && (
-                  <p className="mt-2 text-xs italic text-neutral-500">
+                  <p className="mt-2 text-xs italic text-muted">
                     Your note: {notes[favorite.place_id].personal_note}
                   </p>
                 )}
 
                 {editingNote === favorite.place_id ? (
-                  <div className="mt-2 space-y-2 p-3 rounded border border-neutral-200 dark:border-neutral-800">
+                  <div className="mt-2 space-y-2 p-3 rounded-xl border border-line bg-crema/40">
                     <input
                       type="text"
                       placeholder="Noise (e.g. quiet)"
                       value={noteDraft.noise_level}
                       onChange={(e) => setNoteDraft((prev) => ({ ...prev, noise_level: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                     />
                     <input
                       type="text"
                       placeholder="Wifi (e.g. yes)"
                       value={noteDraft.wifi}
                       onChange={(e) => setNoteDraft((prev) => ({ ...prev, wifi: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                     />
                     <input
                       type="text"
                       placeholder="Outlets (e.g. yes)"
                       value={noteDraft.outlets}
                       onChange={(e) => setNoteDraft((prev) => ({ ...prev, outlets: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                     />
                     <input
                       type="text"
                       placeholder="Good for studying (e.g. yes)"
                       value={noteDraft.good_for_studying}
                       onChange={(e) => setNoteDraft((prev) => ({ ...prev, good_for_studying: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                     />
                     <textarea
                       placeholder="Personal note"
                       value={noteDraft.personal_note}
                       onChange={(e) => setNoteDraft((prev) => ({ ...prev, personal_note: e.target.value }))}
-                      className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                      className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                     />
                     <div className="flex gap-2">
                       <button
                         onClick={() => saveNote(favorite)}
-                        className="text-sm px-3 py-1 rounded bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                        className="text-sm px-3 py-1.5 rounded-lg bg-coffee text-white hover:bg-espresso transition-colors"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingNote(null)}
-                        className="text-sm px-3 py-1 rounded border border-neutral-300 dark:border-neutral-700"
+                        className="text-sm px-3 py-1.5 rounded-lg border border-line text-muted"
                       >
                         Cancel
                       </button>
@@ -242,7 +261,7 @@ export default function FavoritesPage() {
                 ) : (
                   <button
                     onClick={() => startEditingNote(favorite)}
-                    className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 underline block"
+                    className="mt-2 text-sm text-coffee underline block"
                   >
                     {notes[favorite.place_id] ? "Edit your note" : "Add your note"}
                   </button>
