@@ -362,7 +362,7 @@ export default function Home() {
             ❤️ Favorites
           </Link>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-neutral-900 dark:text-white">
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-coffee dark:text-coffee-light">
           Find your kind of cafe
         </h1>
         <p className="mt-4 text-lg text-neutral-600 dark:text-neutral-400">
@@ -375,7 +375,7 @@ export default function Home() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. quiet cafes for studying in Baku"
-            className="w-full px-5 py-3 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+            className="w-full px-5 py-3 rounded-2xl border border-coffee/20 dark:border-coffee-light/30 bg-cream dark:bg-cream text-foreground placeholder-coffee/40 focus:outline-none focus:ring-2 focus:ring-coffee dark:focus:ring-coffee-light"
           />
         </form>
 
@@ -463,7 +463,7 @@ export default function Home() {
               {filteredCafes.map((cafe) => (
                 <li
                   key={cafe.id}
-                  className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800"
+                  className="p-4 rounded-2xl border border-coffee/15 dark:border-coffee-light/20 bg-cream/50 dark:bg-cream/30"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h2 className="font-semibold text-neutral-900 dark:text-white">
@@ -582,7 +582,7 @@ export default function Home() {
                               </div>
                             );
                           })()}
-                          
+
                           {v.data_source === "ai_estimate" && (
                             <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
                               ⚠️ No reviews available — this is a general AI estimate, not confirmed by real reviews.
@@ -598,7 +598,7 @@ export default function Home() {
                                 {recommendedFor.map((tag) => (
                                   <span
                                     key={tag}
-                                    className="px-2 py-0.5 rounded-full bg-neutral-200 dark:bg-neutral-800 text-xs text-neutral-700 dark:text-neutral-300"
+                                    className="px-2 py-0.5 rounded-full bg-sage/20 dark:bg-sage/25 text-xs text-sage dark:text-sage-light"
                                   >
                                     ✓ {tag}
                                   </span>
