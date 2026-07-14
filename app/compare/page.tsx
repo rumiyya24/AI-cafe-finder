@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, Volume2, Wifi, Plug, BookOpen, Scale } from "lucide-react";
 
 type CafeCompareData = {
   id: string;
@@ -68,34 +69,31 @@ function CompareContent() {
 
   if (ids.length < 2) {
     return (
-      <p className="text-center text-neutral-500 mt-8">
+      <p className="text-center text-muted mt-8">
         Select at least 2 cafes to compare from the search page.
       </p>
     );
   }
 
   if (loading) {
-    return <p className="text-center text-neutral-500 mt-8">Loading comparison...</p>;
+    return <p className="text-center text-muted mt-8">Loading comparison...</p>;
   }
 
-  const rows: { label: string; key: keyof NonNullable<CafeCompareData["vibe"]> }[] = [
-    { label: "Noise", key: "noise_level" },
-    { label: "Wifi", key: "wifi" },
-    { label: "Outlets", key: "outlets" },
-    { label: "Good for studying", key: "good_for_studying" },
+  const rows: { label: string; key: keyof NonNullable<CafeCompareData["vibe"]>; icon: typeof Volume2 }[] = [
+    { label: "Noise", key: "noise_level", icon: Volume2 },
+    { label: "Wifi", key: "wifi", icon: Wifi },
+    { label: "Outlets", key: "outlets", icon: Plug },
+    { label: "Good for studying", key: "good_for_studying", icon: BookOpen },
   ];
 
   return (
-    <div className="overflow-x-auto mt-8">
+    <div className="overflow-x-auto mt-8 rounded-2xl border border-line">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr>
-            <th className="text-left p-2 border-b border-neutral-200 dark:border-neutral-800"></th>
+          <tr className="bg-crema/60 dark:bg-crema">
+            <th className="text-left p-3 border-b border-line"></th>
             {cafes.map((cafe) => (
-              <th
-                key={cafe.id}
-                className="text-left p-2 border-b border-neutral-200 dark:border-neutral-800 font-semibold"
-              >
+              <th key={cafe.id} className="text-left p-3 border-b border-line font-bold text-espresso">
                 {cafe.name}
                 {cafe.error && (
                   <p className="text-xs text-red-500 font-normal">Failed to load</p>
@@ -106,37 +104,32 @@ function CompareContent() {
         </thead>
         <tbody>
           <tr>
-            <td className="p-2 text-neutral-500 border-b border-neutral-200 dark:border-neutral-800">
-              Address
-            </td>
+            <td className="p-3 text-muted border-b border-line">Address</td>
             {cafes.map((cafe) => (
-              <td
-                key={cafe.id}
-                className="p-2 border-b border-neutral-200 dark:border-neutral-800"
-              >
+              <td key={cafe.id} className="p-3 border-b border-line text-muted">
                 {cafe.address || "-"}
               </td>
             ))}
           </tr>
-          {rows.map(({ label, key }) => (
+          {rows.map(({ label, key, icon: Icon }) => (
             <tr key={key}>
-              <td className="p-2 text-neutral-500 border-b border-neutral-200 dark:border-neutral-800">
-                {label}
+              <td className="p-3 text-muted border-b border-line">
+                <span className="flex items-center gap-1.5">
+                  <Icon size={14} className="text-coffee" />
+                  {label}
+                </span>
               </td>
               {cafes.map((cafe) => (
-                <td
-                  key={cafe.id}
-                  className="p-2 border-b border-neutral-200 dark:border-neutral-800"
-                >
+                <td key={cafe.id} className="p-3 border-b border-line text-muted">
                   {cafe.vibe ? cafe.vibe[key] : "not checked"}
                 </td>
               ))}
             </tr>
           ))}
           <tr>
-            <td className="p-2 text-neutral-500">Source</td>
+            <td className="p-3 text-muted">Source</td>
             {cafes.map((cafe) => (
-              <td key={cafe.id} className="p-2 text-xs text-neutral-400">
+              <td key={cafe.id} className="p-3 text-xs text-muted">
                 {cafe.vibe?.data_source === "ai_estimate"
                   ? "AI estimate (no reviews)"
                   : cafe.vibe
@@ -153,16 +146,17 @@ function CompareContent() {
 
 export default function ComparePage() {
   return (
-    <main className="min-h-screen px-6 py-16 bg-white dark:bg-neutral-950">
+    <main className="min-h-screen px-6 py-16 bg-background">
       <div className="max-w-3xl mx-auto">
-        <Link href="/" className="text-sm text-neutral-500 underline">
-          ← Back to search
+        <Link href="/" className="flex items-center gap-1.5 text-sm text-muted hover:text-espresso">
+          <ArrowLeft size={15} /> Back to search
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white mt-4">
+        <h1 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight text-espresso mt-4">
+          <Scale size={26} className="text-coffee" />
           Compare cafes
         </h1>
 
-        <Suspense fallback={<p className="text-center text-neutral-500 mt-8">Loading...</p>}>
+        <Suspense fallback={<p className="text-center text-muted mt-8">Loading...</p>}>
           <CompareContent />
         </Suspense>
       </div>
