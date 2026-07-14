@@ -28,6 +28,7 @@ type Cafe = {
   rating?: number;
   userRatingCount?: number;
   location?: { latitude: number; longitude: number };
+  photos?: { name: string; authorAttributions?: { displayName: string }[] }[];
 };
 
 type VibeInfo = {
@@ -63,6 +64,48 @@ type EvidenceItem = {
 
 const LinkTag = "a" as const;
 
+function CafeThumbnail({ cafe, gradient }: { cafe: Cafe; gradient: string }) {
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const photoName = cafe.photos?.[0]?.name;
+  const authorName = cafe.photos?.[0]?.authorAttributions?.[0]?.displayName;
+
+  useEffect(() => {
+    if (!photoName) return;
+    fetch(`/api/photo?name=${encodeURIComponent(photoName)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.photoUri) setPhotoUrl(data.photoUri);
+      })
+      .catch(() => {});
+  }, [photoName]);
+
+  if (photoUrl) {
+    return (
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photoUrl}
+          alt={cafe.displayName.text}
+          className="w-full h-full object-cover"
+        />
+        {authorName && (
+          <span className="absolute bottom-1 left-2 text-[10px] text-white/80 bg-black/30 px-1.5 py-0.5 rounded">
+            Photo: {authorName}
+          </span>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div className="w-full h-full flex items-center justify-center" style={{ background: gradient }}>
+      <span className="text-white text-4xl font-extrabold opacity-90">
+        {cafe.displayName.text.charAt(0).toUpperCase()}
+      </span>
+    </div>
+  );
+}
+
 export default function Home() {
   const [query, setQuery] = useState("");
   const [cafes, setCafes] = useState<Cafe[]>([]);
@@ -84,6 +127,7 @@ export default function Home() {
   const [filterWifi, setFilterWifi] = useState("");
   const [filterStudying, setFilterStudying] = useState("");
   const [compareSelection, setCompareSelection] = useState<Set<string>>(new Set());
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch("/api/favorites")
@@ -530,13 +574,8 @@ export default function Home() {
                     key={cafe.id}
                     className="rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel transition-shadow overflow-hidden"
                   >
-                    <div
-                      className="h-28 relative flex items-center justify-center"
-                      style={{ background: getThumbnailGradient(cafe.id) }}
-                    >
-                      <span className="text-white text-4xl font-extrabold opacity-90">
-                        {cafe.displayName.text.charAt(0).toUpperCase()}
-                      </span>
+                    <div className="h-28 relative overflow-hidden">
+                      <CafeThumbnail cafe={cafe} gradient={getThumbnailGradient(cafe.id)} />
                       <button
                         onClick={() => toggleFavorite(cafe)}
                         aria-label={favorites.has(cafe.id) ? "Remove favorite" : "Add favorite"}
