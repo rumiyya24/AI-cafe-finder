@@ -3,6 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Heart, Volume2, Wifi, Plug, BookOpen } from "lucide-react";
+import type { NoteInfo } from "../types";
+
+type SimpleVibeInfo = {
+  noise_level: string;
+  wifi: string;
+  outlets: string;
+  good_for_studying: string;
+};
 
 type Favorite = {
   place_id: string;
@@ -11,25 +19,10 @@ type Favorite = {
   created_at: string;
 };
 
-type NoteInfo = {
-  noise_level?: string;
-  wifi?: string;
-  outlets?: string;
-  good_for_studying?: string;
-  personal_note?: string;
-};
-
-type VibeInfo = {
-  noise_level: string;
-  wifi: string;
-  outlets: string;
-  good_for_studying: string;
-};
-
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [notes, setNotes] = useState<Record<string, NoteInfo>>({});
-  const [vibes, setVibes] = useState<Record<string, VibeInfo>>({});
+  const [vibes, setVibes] = useState<Record<string, SimpleVibeInfo>>({});
   const [loading, setLoading] = useState(true);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState<NoteInfo>({
@@ -61,7 +54,7 @@ export default function FavoritesPage() {
         }
         setNotes(notesMap);
 
-        const vibesMap: Record<string, VibeInfo> = {};
+       const vibesMap: Record<string, SimpleVibeInfo> = {};
         for (const vibe of vibeData.vibes || []) {
           vibesMap[vibe.place_id] = {
             noise_level: vibe.noise_level,
