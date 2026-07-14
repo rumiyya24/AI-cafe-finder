@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import CafeMap from "./components/CafeMap";
+import Concierge from "./components/Concierge";
 import Link from "next/link";
 
 type Cafe = {
@@ -158,6 +159,16 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleConciergeSearch(
+    searchQuery: string,
+    filters: { noise: string; wifi: string; studying: string }
+  ) {
+    setFilterNoise(filters.noise);
+    setFilterWifi(filters.wifi);
+    setFilterStudying(filters.studying);
+    await runSearch(searchQuery);
   }
 
   async function checkVibe(cafeId: string) {
@@ -629,6 +640,7 @@ export default function Home() {
         <CafeMap cafes={cafes} />
       </div>
 
+      <Concierge onSearch={handleConciergeSearch} />
       {compareSelection.size >= 2 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-5 py-3 rounded-full shadow-lg flex items-center gap-3">
           <span className="text-sm">{compareSelection.size} selected</span>
