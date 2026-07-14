@@ -1,5 +1,7 @@
 # AI Cafe Finder
 
+**Live demo:** [ai-cafe-finder.vercel.app](https://ai-cafe-finder.vercel.app) (password-protected -- contact me for access)
+
 Find the right cafe based on vibe -- not just star ratings. Search by noise level, wifi, outlets, and study-friendliness, backed by AI analysis of real Google reviews (not guesses), with source citations back to the actual reviews behind each claim.
 
 Built as a hands-on learning project: real API integrations, a full visual redesign, and an emphasis on honesty over polish -- the app is explicit about what's confirmed by evidence versus AI-estimated versus genuinely unknown, rather than presenting confident-sounding numbers with nothing behind them.
@@ -53,9 +55,10 @@ Required keys:
 | Variable | Where to get it |
 |---|---|
 | `GOOGLE_PLACES_API_KEY` | Google Cloud Console -- enable Places API (New), Routes API. Restrict to these APIs. **Server-side only, never exposed to the browser.** |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Cloud Console -- enable Maps JavaScript API. This one *is* exposed to the browser (required for map rendering) -- restrict by HTTP referrer in Cloud Console, not by keeping it secret. |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Cloud Console -- enable Maps JavaScript API. This one *is* exposed to the browser (required for map rendering) -- restrict by HTTP referrer in Cloud Console (add both `localhost:3000/*` for dev and your deployed domain for production), not by keeping it secret. |
 | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey) -- free tier covers Flash-tier models. |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | Supabase project settings -- use the **secret** key (or legacy `service_role`), never the publishable/anon key, since all database access goes through server-side API routes only. |
+| `SITE_USERNAME`, `SITE_PASSWORD` | Your own choice -- gates the entire app (including API routes) behind HTTP Basic Auth. Required because the app is single-user by design (see below); unset locally by default so dev stays open. |
 
 **Never commit real key values.** `.env.local` is gitignored; `.env.example` should only ever contain placeholder text.
 
@@ -121,6 +124,16 @@ npm run dev
 ```
 
 Visit `http://localhost:3000`.
+
+## Deployment
+
+Deployed on [Vercel](https://vercel.com), connected directly to this GitHub repo -- pushes to `main` auto-deploy.
+
+**Required before deploying:**
+1. Add all environment variables (including `SITE_USERNAME`/`SITE_PASSWORD`) in Vercel's project settings
+2. After the first deploy, add the deployed domain (e.g. `your-app.vercel.app/*`) to the Maps JavaScript API key's allowed HTTP referrers in Google Cloud Console -- the map will fail otherwise, since the key is referrer-restricted
+
+**Why password-protected:** this app has no authentication system by design (single-user: one preferences row, unscoped favorites/notes tables). Without Basic Auth, anyone with the URL could modify your data or consume your API quota (Gemini, Places, Maps, Routes all cost against your account). The middleware (`middleware.ts`) gates every route including API endpoints, not just pages.
 
 ## Design principles
 
