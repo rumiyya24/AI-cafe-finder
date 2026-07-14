@@ -62,6 +62,13 @@ type EvidenceItem = {
   idx?: number;
 };
 
+type DistanceResult = {
+  mode: string;
+  error: boolean;
+  durationMinutes?: number;
+  distanceKm?: number;
+};
+
 const LinkTag = "a" as const;
 
 function CafeThumbnail({ cafe, gradient }: { cafe: Cafe; gradient: string }) {
@@ -130,6 +137,30 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"relevance" | "quietest">("relevance");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
+  const [selectedCafeId, setSelectedCafeId] = useState<string | null>(null);
+  const [distances, setDistances] = useState<Record<string, DistanceResult[]>>({});
+  const [distanceLoading, setDistanceLoading] = useState(false);
+
+  async function selectCafe(cafe: Cafe) {
+    setSelectedCafeId(cafe.id);
+
+    if (!userLocation || !cafe.location || distances[cafe.id]) return;
+
+    setDistanceLoading(true);
+    try {
+      const response = await fetch(
+        `/api/distance?originLat=${userLocation.lat}&originLng=${userLocation.lng}&destLat=${cafe.location.latitude}&destLng=${cafe.location.longitude}`
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setDistances((prev) => ({ ...prev, [cafe.id]: data.results }));
+      }
+    } catch {
+      // silently fail -- distance is a nice-to-have, not critical
+    } finally {
+      setDistanceLoading(false);
+    }
+  }
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -641,9 +672,12 @@ export default function Home() {
 
               <ul className="space-y-4">
                 {sortedCafes.map((cafe) => (
-                  <li
+                 <li
                     key={cafe.id}
-                    className="rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel hover:-translate-y-0.5 transition-all overflow-hidden"
+                    onClick={() => selectCafe(cafe)}
+                    className={`rounded-2xl border bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel hover:-translate-y-0.5 transition-all overflow-hidden cursor-pointer ${
+                      selectedCafeId === cafe.id ? "border-coffee border-2" : "border-line"
+                    }`}
                   >
                     <div className="h-28 relative overflow-hidden">
                       <CafeThumbnail cafe={cafe} gradient={getThumbnailGradient(cafe.id)} />
@@ -672,6 +706,30 @@ export default function Home() {
                       />
                       Compare
                     </label>
+                    {selectedCafeId === cafe.id && (
+                      <div className="mt-2 p-2 rounded-lg bg-crema/50 dark:bg-crema border border-line" onClick={(e) => e.stopPropagation()}>
+                        {!userLocation && (
+                          <p className="text-xs text-muted">
+                            Enable location access to see distances.
+                          </p>
+                        )}
+                        {userLocation && distanceLoading && !distances[cafe.id] && (
+                          <p className="text-xs text-muted">Calculating distances...</p>
+                        )}
+                        {userLocation && distances[cafe.id] && (
+                          <div className="flex gap-3 text-xs">
+                            {distances[cafe.id].map((d) =>
+                              d.error ? null : (
+                                <span key={d.mode} className="text-muted">
+                                  {d.mode === "WALK" ? "🚶" : d.mode === "DRIVE" ? "🚗" : "🚌"}{" "}
+                                  {d.distanceKm}km · {d.durationMinutes}min
+                                </span>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {cafe.rating && (
                       <p className="flex items-center gap-1 text-sm text-amber font-semibold mt-1">
                         <Star size={14} className="fill-amber text-amber" />
@@ -880,7 +938,14 @@ export default function Home() {
             </div>
 
             <div className="order-first md:order-last md:sticky md:top-20 rounded-2xl border border-line shadow-sm overflow-hidden">
-              <CafeMap cafes={cafes} />
+              <CafeMap
+                cafes={cafes}
+                selectedCafeId={selectedCafeId}
+                onSelectCafe={(id) => {
+                  const cafe = cafes.find((c) => c.id === id);
+                  if (cafe) selectCafe(cafe);
+                }}
+              />
             </div>
           </div>
           </>
@@ -905,6 +970,43 @@ export default function Home() {
           </Link>
         </div>
       )}
+
+      <footer className="w-full bg-espresso text-crema/70 mt-16">
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="flex items-center gap-2 text-white font-extrabold">
+            <span className="w-8 h-8 rounded-[10px] bg-coffee text-white flex items-center justify-center">
+              <Coffee size={18} />
+            </span>
+            Cafe Finder
+          </div>
+          <p className="mt-3 text-sm max-w-sm">
+            Find the right cafe for how you want to work, study, or relax --
+            backed by AI analysis of real reviews, not guesses.
+          </p>
+          <div className="mt-6 flex gap-6 text-sm">
+            <Link href="/favorites" className="hover:text-white">
+              Favorites
+            </Link>
+            <Link href="/preferences" className="hover:text-white">
+              Preferences
+            </Link>
+            
+              {React.createElement(
+              LinkTag,
+              {
+                href: "https://github.com/rumiyya24/AI-cafe-finder",
+                target: "_blank",
+                rel: "noopener noreferrer",
+                className: "hover:text-white",
+              },
+              "GitHub"
+            )}
+          </div>
+          <div className="mt-8 pt-6 border-t border-white/10 text-xs">
+            A personal project. Cafe data via Google Places. Vibe analysis via Gemini AI.
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

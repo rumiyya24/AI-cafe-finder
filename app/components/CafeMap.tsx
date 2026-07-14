@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { APIProvider, Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap } from "@vis.gl/react-google-maps";
 
 const DEFAULT_CENTER = { lat: 20, lng: 0 };
 const DEFAULT_ZOOM = 2;
@@ -14,6 +14,8 @@ type Cafe = {
 
 type CafeMapProps = {
   cafes: Cafe[];
+  selectedCafeId?: string | null;
+  onSelectCafe?: (cafeId: string) => void;
 };
 
 function FitBoundsToResults({ cafes }: { cafes: Cafe[] }) {
@@ -35,6 +37,22 @@ function FitBoundsToResults({ cafes }: { cafes: Cafe[] }) {
 
     map.fitBounds(bounds);
   }, [map, cafes]);
+
+  return null;
+}
+
+function ZoomToSelected({ cafes, selectedCafeId }: { cafes: Cafe[]; selectedCafeId?: string | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !selectedCafeId) return;
+
+    const cafe = cafes.find((c) => c.id === selectedCafeId);
+    if (!cafe?.location) return;
+
+    map.panTo({ lat: cafe.location.latitude, lng: cafe.location.longitude });
+    map.setZoom(16);
+  }, [map, selectedCafeId, cafes]);
 
   return null;
 }
@@ -67,7 +85,7 @@ function CoffeePin() {
   );
 }
 
-export default function CafeMap({ cafes }: CafeMapProps) {
+export default function CafeMap({ cafes, selectedCafeId, onSelectCafe }: CafeMapProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey) {
@@ -87,6 +105,25 @@ export default function CafeMap({ cafes }: CafeMapProps) {
           mapId="cafe-finder-map"
         >
           <FitBoundsToResults cafes={cafes} />
+          <ZoomToSelected cafes={cafes} selectedCafeId={selectedCafeId} />
+          {selectedCafeId &&
+            (() => {
+              const selectedCafe = cafes.find((c) => c.id === selectedCafeId);
+              if (!selectedCafe?.location) return null;
+              return (
+                <InfoWindow
+                  position={{
+                    lat: selectedCafe.location.latitude,
+                    lng: selectedCafe.location.longitude,
+                  }}
+                  pixelOffset={[0, -36]}
+                >
+                  <p className="text-sm font-semibold text-espresso px-1">
+                    {selectedCafe.displayName.text}
+                  </p>
+                </InfoWindow>
+              );
+            })()}
           {cafes
             .filter((cafe) => cafe.location)
             .map((cafe) => (
@@ -97,6 +134,7 @@ export default function CafeMap({ cafes }: CafeMapProps) {
                   lng: cafe.location!.longitude,
                 }}
                 title={cafe.displayName.text}
+                onClick={() => onSelectCafe?.(cafe.id)}
               >
                 <CoffeePin />
               </AdvancedMarker>
