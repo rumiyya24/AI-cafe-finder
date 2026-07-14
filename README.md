@@ -1,6 +1,6 @@
 # AI Cafe Finder
 
-**Live demo:** [ai-cafe-finder.vercel.app](https://ai-cafe-finder.vercel.app) (password-protected -- contact me for access)
+**Live demo:** [ai-cafe-finder.vercel.app](https://ai-cafe-finder.vercel.app)
 
 Find the right cafe based on vibe -- not just star ratings. Search by noise level, wifi, outlets, and study-friendliness, backed by AI analysis of real Google reviews (not guesses), with source citations back to the actual reviews behind each claim.
 
