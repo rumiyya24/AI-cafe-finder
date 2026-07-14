@@ -4,6 +4,22 @@ import React, { useState, useEffect } from "react";
 import CafeMap from "./components/CafeMap";
 import Concierge from "./components/Concierge";
 import Link from "next/link";
+import {
+  Search,
+  Heart,
+  Volume2,
+  Wifi,
+  Plug,
+  Star,
+  Coffee,
+  CloudRain,
+  Laptop,
+  Clock,
+  BookOpen,
+  AlertTriangle,
+  CheckCircle2,
+  Scale,
+} from "lucide-react";
 
 type Cafe = {
   id: string;
@@ -118,10 +134,10 @@ export default function Home() {
   }, []);
 
   const suggestedPrompts = [
-    { emoji: "☕", label: "Best study cafes", query: "best cafes for studying" },
-    { emoji: "💻", label: "I have a Zoom meeting", query: "quiet cafe with good wifi for video calls" },
-    { emoji: "📖", label: "Somewhere for 5 hours", query: "cafe good for long work sessions" },
-    { emoji: "🌧", label: "Cozy rainy-day cafes", query: "cozy warm cafe" },
+    { icon: Coffee, label: "Best study cafes", query: "best cafes for studying" },
+    { icon: Laptop, label: "I have a Zoom meeting", query: "quiet cafe with good wifi for video calls" },
+    { icon: Clock, label: "Somewhere for 5 hours", query: "cafe good for long work sessions" },
+    { icon: CloudRain, label: "Cozy rainy-day cafes", query: "cozy warm cafe" },
   ];
 
   async function runSearch(searchQuery: string) {
@@ -234,6 +250,7 @@ export default function Home() {
       setFavorites((prev) => new Set(prev).add(cafe.id));
     }
   }
+
   function toggleCompare(cafeId: string) {
     setCompareSelection((prev) => {
       const next = new Set(prev);
@@ -317,9 +334,7 @@ export default function Home() {
     return (
       <li key={item.label}>
         {item.label}: {item.text}
-        {url
-          ? " "
-          : null}
+        {url ? " " : null}
         {url
           ? React.createElement(
               LinkTag,
@@ -327,7 +342,7 @@ export default function Home() {
                 href: url,
                 target: "_blank",
                 rel: "noopener noreferrer",
-                className: "underline text-neutral-600 dark:text-neutral-300",
+                className: "underline text-coffee dark:text-caramel",
               },
               "(view source)"
             )
@@ -355,39 +370,64 @@ export default function Home() {
       });
 
   return (
-    <main className="min-h-screen flex flex-col items-center px-6 py-16 bg-white dark:bg-neutral-950">
-      <div className="max-w-2xl w-full text-center">
-        <div className="flex justify-end mb-4">
-          <Link href="/favorites" className="text-sm text-neutral-500 underline">
-            ❤️ Favorites
-          </Link>
+    <main className="min-h-screen flex flex-col items-center bg-background">
+      <header className="w-full border-b border-line sticky top-0 z-40 bg-background/90 backdrop-blur">
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-extrabold text-espresso tracking-tight">
+            <span className="w-8 h-8 rounded-[10px] bg-coffee text-white flex items-center justify-center">
+              <Coffee size={18} />
+            </span>
+            Cafe Finder
+          </div>
+          <nav className="flex items-center gap-5 text-sm">
+            <Link href="/favorites" className="flex items-center gap-1.5 text-muted hover:text-espresso">
+              <Heart size={16} /> Favorites
+            </Link>
+            <Link href="/preferences" className="text-muted hover:text-espresso">
+              Preferences
+            </Link>
+          </nav>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-coffee dark:text-coffee-light">
-          Find your kind of cafe
+      </header>
+
+      <div className="max-w-2xl w-full text-center px-6 pt-16 pb-4">
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-espresso">
+          Find your <span className="text-coffee">kind</span> of cafe
         </h1>
-        <p className="mt-4 text-lg text-neutral-600 dark:text-neutral-400">
+        <p className="mt-4 text-lg text-muted">
           Search by vibe, noise level, wifi, seating, and more.
         </p>
 
-        <form onSubmit={handleSearch} className="mt-8">
+        <form
+          onSubmit={handleSearch}
+          className="mt-8 flex items-center gap-2 bg-white dark:bg-crema border border-line rounded-full pl-5 pr-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-caramel/40"
+        >
+          <Search size={18} className="text-muted shrink-0" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. quiet cafes for studying in Baku"
-            className="w-full px-5 py-3 rounded-2xl border border-coffee/20 dark:border-coffee-light/30 bg-cream dark:bg-cream text-foreground placeholder-coffee/40 focus:outline-none focus:ring-2 focus:ring-coffee dark:focus:ring-coffee-light"
+            className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted"
           />
+          <button
+            type="submit"
+            className="text-sm font-semibold px-5 py-2.5 rounded-full bg-coffee text-white hover:bg-espresso transition-colors"
+          >
+            Search
+          </button>
         </form>
 
         {!hasSearched && (
-          <div className="mt-4 flex flex-wrap gap-2 justify-center">
+          <div className="mt-5 flex flex-wrap gap-2.5 justify-center">
             {suggestedPrompts.map((prompt) => (
               <button
                 key={prompt.label}
                 onClick={() => runSearch(prompt.query)}
-                className="text-sm px-3 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                className="flex items-center gap-1.5 text-sm px-3.5 py-2 rounded-full border border-line bg-white dark:bg-crema text-espresso hover:border-caramel hover:bg-crema transition-colors"
               >
-                {prompt.emoji} {prompt.label}
+                <prompt.icon size={15} className="text-coffee" />
+                {prompt.label}
               </button>
             ))}
           </div>
@@ -395,58 +435,67 @@ export default function Home() {
       </div>
 
       {cafes.length > 0 && (
-        <div className="max-w-2xl w-full mt-6 flex flex-wrap gap-2 items-center justify-center text-sm">
-          <select
-            value={filterNoise}
-            onChange={(e) => setFilterNoise(e.target.value)}
-            className="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
-          >
-            <option value="">Any noise</option>
-            <option value="quiet">Quiet</option>
-            <option value="moderate">Moderate</option>
-            <option value="loud">Loud</option>
-          </select>
-          <select
-            value={filterWifi}
-            onChange={(e) => setFilterWifi(e.target.value)}
-            className="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
-          >
-            <option value="">Any wifi</option>
-            <option value="yes">Has wifi</option>
-            <option value="no">No wifi</option>
-          </select>
-          <select
-            value={filterStudying}
-            onChange={(e) => setFilterStudying(e.target.value)}
-            className="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
-          >
-            <option value="">Any studying</option>
-            <option value="yes">Good for studying</option>
-            <option value="no">Not for studying</option>
-          </select>
+        <div className="max-w-2xl w-full px-6 mt-6 flex flex-wrap gap-2 items-center justify-center text-sm">
+          <div className="flex items-center gap-1.5 bg-white dark:bg-crema border border-line rounded-lg px-2 py-1.5">
+            <Volume2 size={14} className="text-coffee" />
+            <select
+              value={filterNoise}
+              onChange={(e) => setFilterNoise(e.target.value)}
+              className="bg-transparent outline-none"
+            >
+              <option value="">Any noise</option>
+              <option value="quiet">Quiet</option>
+              <option value="moderate">Moderate</option>
+              <option value="loud">Loud</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5 bg-white dark:bg-crema border border-line rounded-lg px-2 py-1.5">
+            <Wifi size={14} className="text-coffee" />
+            <select
+              value={filterWifi}
+              onChange={(e) => setFilterWifi(e.target.value)}
+              className="bg-transparent outline-none"
+            >
+              <option value="">Any wifi</option>
+              <option value="yes">Has wifi</option>
+              <option value="no">No wifi</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5 bg-white dark:bg-crema border border-line rounded-lg px-2 py-1.5">
+            <BookOpen size={14} className="text-coffee" />
+            <select
+              value={filterStudying}
+              onChange={(e) => setFilterStudying(e.target.value)}
+              className="bg-transparent outline-none"
+            >
+              <option value="">Any studying</option>
+              <option value="yes">Good for studying</option>
+              <option value="no">Not for studying</option>
+            </select>
+          </div>
         </div>
       )}
 
-      <div className="max-w-2xl w-full mt-4">
+      <div className="max-w-2xl w-full px-6 mt-4">
         {loading && (
-          <p className="text-center text-neutral-500">Searching...</p>
+          <p className="text-center text-muted">Searching...</p>
         )}
 
         {error && (
-          <p className="text-center text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-center text-red-600">{error}</p>
         )}
 
         {!loading && !error && cafes.length > 0 && (
           <>
             {filtersActive && (
-              <p className="text-center text-xs text-neutral-500 mb-3">
+              <p className="text-center text-xs text-muted mb-3">
                 Showing {filteredCafes.length} of {cafes.length} results
                 ({checkedCount} vibe-checked -- check more cafes to include them in filtering)
               </p>
             )}
 
             {filtersActive && checkedCount === 0 && (
-              <p className="text-center text-neutral-500">
+              <p className="text-center text-muted">
                 Filters only apply to cafes you&apos;ve checked the vibe for.
                 Click &quot;Check vibe&quot; on a few results below, then your
                 filters will start working.
@@ -454,7 +503,7 @@ export default function Home() {
             )}
 
             {filtersActive && checkedCount > 0 && filteredCafes.length === 0 && (
-              <p className="text-center text-neutral-500">
+              <p className="text-center text-muted">
                 None of your checked cafes match these filters yet. Try checking more, or clear filters.
               </p>
             )}
@@ -463,22 +512,25 @@ export default function Home() {
               {filteredCafes.map((cafe) => (
                 <li
                   key={cafe.id}
-                  className="p-4 rounded-2xl border border-coffee/15 dark:border-coffee-light/20 bg-cream/50 dark:bg-cream/30"
+                  className="p-4 rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel transition-shadow"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-semibold text-neutral-900 dark:text-white">
+                    <h2 className="font-bold text-espresso">
                       {cafe.displayName.text}
                     </h2>
                     <button
                       onClick={() => toggleFavorite(cafe)}
                       aria-label={favorites.has(cafe.id) ? "Remove favorite" : "Add favorite"}
-                      className="text-xl leading-none shrink-0"
+                      className="shrink-0"
                     >
-                      {favorites.has(cafe.id) ? "❤️" : "🤍"}
+                      <Heart
+                        size={20}
+                        className={favorites.has(cafe.id) ? "fill-red-500 text-red-500" : "text-muted"}
+                      />
                     </button>
                   </div>
-                  <p className="text-sm text-neutral-500">{cafe.formattedAddress}</p>
-                  <label className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
+                  <p className="text-sm text-muted">{cafe.formattedAddress}</p>
+                  <label className="mt-1 flex items-center gap-1.5 text-xs text-muted">
                     <input
                       type="checkbox"
                       checked={compareSelection.has(cafe.id)}
@@ -487,22 +539,23 @@ export default function Home() {
                     Compare
                   </label>
                   {cafe.rating && (
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                      ⭐ {cafe.rating} ({cafe.userRatingCount} reviews)
+                    <p className="flex items-center gap-1 text-sm text-amber font-semibold mt-1">
+                      <Star size={14} className="fill-amber text-amber" />
+                      {cafe.rating} ({cafe.userRatingCount} reviews)
                     </p>
                   )}
 
                   {!vibeData[cafe.id] && (
                     <button
                       onClick={() => checkVibe(cafe.id)}
-                      className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 underline"
+                      className="mt-2 text-sm text-coffee underline"
                     >
                       Check vibe
                     </button>
                   )}
 
                   {vibeData[cafe.id] === "loading" && (
-                    <p className="mt-2 text-sm text-neutral-400">Checking vibe...</p>
+                    <p className="mt-2 text-sm text-muted">Checking vibe...</p>
                   )}
 
                   {vibeData[cafe.id] === "error" && (
@@ -534,49 +587,51 @@ export default function Home() {
                       ];
 
                       return (
-                        <div className="mt-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+                        <div className="mt-3 p-3 rounded-xl bg-crema/60 dark:bg-crema border border-line">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-neutral-600 dark:text-neutral-400">
-                              🔊 Noise{notes[cafe.id]?.noise_level && " (your note)"}
+                            <span className="flex items-center gap-1.5 text-muted">
+                              <Volume2 size={13} className="text-coffee" />
+                              Noise{notes[cafe.id]?.noise_level && " (your note)"}
                             </span>
-                            <span className="flex gap-0.5">
+                            <span className="flex items-center gap-0.5">
                               {[1, 2, 3].map((step) => (
                                 <span
                                   key={step}
                                   className={`w-4 h-2 rounded-sm ${
-                                    step <= noiseLevel
-                                      ? "bg-neutral-700 dark:bg-neutral-300"
-                                      : "bg-neutral-200 dark:bg-neutral-700"
+                                    step <= noiseLevel ? "bg-coffee" : "bg-line"
                                   }`}
                                 />
                               ))}
-                              <span className="ml-1 text-neutral-500">{effectiveNoise}</span>
+                              <span className="ml-1 text-muted">{effectiveNoise}</span>
                             </span>
                           </div>
 
                           <div className="mt-2 flex items-center justify-between text-xs">
-                            <span className="text-neutral-600 dark:text-neutral-400">
-                              📶 Wifi{notes[cafe.id]?.wifi && " (your note)"}
+                            <span className="flex items-center gap-1.5 text-muted">
+                              <Wifi size={13} className="text-coffee" />
+                              Wifi{notes[cafe.id]?.wifi && " (your note)"}
                             </span>
-                            <span className="text-neutral-500">{effectiveWifi}</span>
+                            <span className="text-muted">{effectiveWifi}</span>
                           </div>
 
                           <div className="mt-2 flex items-center justify-between text-xs">
-                            <span className="text-neutral-600 dark:text-neutral-400">
-                              🔌 Outlets{notes[cafe.id]?.outlets && " (your note)"}
+                            <span className="flex items-center gap-1.5 text-muted">
+                              <Plug size={13} className="text-coffee" />
+                              Outlets{notes[cafe.id]?.outlets && " (your note)"}
                             </span>
-                            <span className="text-neutral-500">{effectiveOutlets}</span>
+                            <span className="text-muted">{effectiveOutlets}</span>
                           </div>
 
                           {(() => {
                             const match = getMatchScore(cafe.id);
                             if (!match) return null;
                             return (
-                              <div className="flex items-center justify-between text-xs mb-2 pb-2 border-b border-neutral-200 dark:border-neutral-800">
-                                <span className="text-neutral-600 dark:text-neutral-400">
+                              <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-line">
+                                <span className="flex items-center gap-1.5 text-muted">
+                                  <Scale size={13} className="text-coffee" />
                                   Match for your preferences
                                 </span>
-                                <span className="font-semibold text-neutral-900 dark:text-white">
+                                <span className="font-semibold text-espresso">
                                   {match.percent}% ({match.matched}/{match.total})
                                 </span>
                               </div>
@@ -584,30 +639,30 @@ export default function Home() {
                           })()}
 
                           {v.data_source === "ai_estimate" && (
-                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
-                              ⚠️ No reviews available — this is a general AI estimate, not confirmed by real reviews.
+                            <p className="flex items-start gap-1.5 mt-2 text-xs text-amber">
+                              <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+                              No reviews available — this is a general AI estimate, not confirmed by real reviews.
                             </p>
                           )}
 
                           {recommendedFor.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-800">
-                              <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">
-                                Recommended for
-                              </p>
-                              <div className="flex flex-wrap gap-1">
+                            <div className="mt-3 pt-3 border-t border-line">
+                              <p className="text-xs text-muted mb-1.5">Recommended for</p>
+                              <div className="flex flex-wrap gap-1.5">
                                 {recommendedFor.map((tag) => (
                                   <span
                                     key={tag}
-                                    className="px-2 py-0.5 rounded-full bg-sage/20 dark:bg-sage/25 text-xs text-sage dark:text-sage-light"
+                                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green/15 text-xs text-green font-medium"
                                   >
-                                    ✓ {tag}
+                                    <CheckCircle2 size={12} />
+                                    {tag}
                                   </span>
                                 ))}
                               </div>
                             </div>
                           )}
 
-                          <details className="mt-3 text-xs text-neutral-500">
+                          <details className="mt-3 text-xs text-muted">
                             <summary className="cursor-pointer underline">
                               View evidence
                             </summary>
@@ -617,7 +672,7 @@ export default function Home() {
                           </details>
 
                           {notes[cafe.id]?.personal_note && (
-                            <p className="mt-2 text-xs italic text-neutral-500">
+                            <p className="mt-2 text-xs italic text-muted">
                               Your note: {notes[cafe.id]?.personal_note}
                             </p>
                           )}
@@ -626,51 +681,51 @@ export default function Home() {
                     })()}
 
                   {editingNote === cafe.id ? (
-                    <div className="mt-2 space-y-2 p-3 rounded border border-neutral-200 dark:border-neutral-800">
+                    <div className="mt-2 space-y-2 p-3 rounded-xl border border-line bg-crema/40">
                       <input
                         type="text"
                         placeholder="Noise (e.g. quiet)"
                         value={noteDraft.noise_level}
                         onChange={(e) => setNoteDraft((prev) => ({ ...prev, noise_level: e.target.value }))}
-                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                       />
                       <input
                         type="text"
                         placeholder="Wifi (e.g. yes)"
                         value={noteDraft.wifi}
                         onChange={(e) => setNoteDraft((prev) => ({ ...prev, wifi: e.target.value }))}
-                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                       />
                       <input
                         type="text"
                         placeholder="Outlets (e.g. yes)"
                         value={noteDraft.outlets}
                         onChange={(e) => setNoteDraft((prev) => ({ ...prev, outlets: e.target.value }))}
-                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                       />
                       <input
                         type="text"
                         placeholder="Good for studying (e.g. yes)"
                         value={noteDraft.good_for_studying}
                         onChange={(e) => setNoteDraft((prev) => ({ ...prev, good_for_studying: e.target.value }))}
-                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                       />
                       <textarea
                         placeholder="Personal note"
                         value={noteDraft.personal_note}
                         onChange={(e) => setNoteDraft((prev) => ({ ...prev, personal_note: e.target.value }))}
-                        className="w-full text-sm px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent"
+                        className="w-full text-sm px-2 py-1.5 rounded-lg border border-line bg-white dark:bg-background"
                       />
                       <div className="flex gap-2">
                         <button
                           onClick={() => saveNote(cafe)}
-                          className="text-sm px-3 py-1 rounded bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                          className="text-sm px-3 py-1.5 rounded-lg bg-coffee text-white hover:bg-espresso transition-colors"
                         >
                           Save
                         </button>
                         <button
                           onClick={() => setEditingNote(null)}
-                          className="text-sm px-3 py-1 rounded border border-neutral-300 dark:border-neutral-700"
+                          className="text-sm px-3 py-1.5 rounded-lg border border-line text-muted"
                         >
                           Cancel
                         </button>
@@ -679,7 +734,7 @@ export default function Home() {
                   ) : (
                     <button
                       onClick={() => startEditingNote(cafe)}
-                      className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 underline block"
+                      className="mt-2 text-sm text-coffee underline block"
                     >
                       {notes[cafe.id] ? "Edit your note" : "Add your note"}
                     </button>
@@ -690,19 +745,22 @@ export default function Home() {
           </>
         )}
         {!loading && !error && hasSearched && cafes.length === 0 && (
-          <p className="text-center text-neutral-500">
+          <p className="text-center text-muted">
             No cafes found. Try a different search.
           </p>
         )}
       </div>
 
-      <div className="max-w-2xl w-full mt-10">
-        <CafeMap cafes={cafes} />
+      <div className="max-w-2xl w-full px-6 mt-10 pb-16">
+        <div className="rounded-2xl border border-line shadow-sm overflow-hidden">
+          <CafeMap cafes={cafes} />
+        </div>
       </div>
 
       <Concierge onSearch={handleConciergeSearch} />
       {compareSelection.size >= 2 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-5 py-3 rounded-full shadow-lg flex items-center gap-3">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-espresso text-white px-5 py-3 rounded-full shadow-lg flex items-center gap-3">
+          <Scale size={16} />
           <span className="text-sm">{compareSelection.size} selected</span>
           <Link
             href={`/compare?ids=${Array.from(compareSelection).join(",")}`}
