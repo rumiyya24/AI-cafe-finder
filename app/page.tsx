@@ -127,6 +127,9 @@ export default function Home() {
   const [filterWifi, setFilterWifi] = useState("");
   const [filterStudying, setFilterStudying] = useState("");
   const [compareSelection, setCompareSelection] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<"relevance" | "quietest">("relevance");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -167,6 +170,26 @@ export default function Home() {
   } | null>(null);
 
   useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationDenied(true);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setUserLocation(coords);
+        runSearch("cafes", coords);
+      },
+      () => {
+        setLocationDenied(true);
+      }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+  useEffect(() => {
     fetch("/api/preferences")
       .then((res) => res.json())
       .then((data) => {
@@ -184,7 +207,7 @@ export default function Home() {
     { icon: CloudRain, label: "Cozy rainy-day cafes", query: "cozy warm cafe" },
   ];
 
-  async function runSearch(searchQuery: string) {
+ async function runSearch(searchQuery: string, coords?: { lat: number; lng: number }) {
     setQuery(searchQuery);
     setLoading(true);
     setError(null);
@@ -194,7 +217,10 @@ export default function Home() {
     setFilterStudying("");
 
     try {
-      const response = await fetch(`/api/places?q=${encodeURIComponent(searchQuery)}`);
+      const locationParams = coords ? `&lat=${coords.lat}&lng=${coords.lng}` : "";
+      const response = await fetch(
+        `/api/places?q=${encodeURIComponent(searchQuery)}${locationParams}`
+      );
       const data = await response.json();
 
       if (!response.ok) {
@@ -417,6 +443,8 @@ export default function Home() {
     return v && v !== "loading" && v !== "error";
   }).length;
 
+  const noiseRank: Record<string, number> = { quiet: 0, moderate: 1, loud: 2 };
+
   const filteredCafes = !filtersActive
     ? cafes
     : cafes.filter((cafe) => {
@@ -427,6 +455,17 @@ export default function Home() {
         if (filterStudying && effective.good_for_studying !== filterStudying) return false;
         return true;
       });
+
+  const sortedCafes =
+    sortBy === "quietest"
+      ? [...filteredCafes].sort((a, b) => {
+          const va = getEffectiveVibe(a.id);
+          const vb = getEffectiveVibe(b.id);
+          const ra = va && va.noise_level in noiseRank ? noiseRank[va.noise_level] : 3;
+          const rb = vb && vb.noise_level in noiseRank ? noiseRank[vb.noise_level] : 3;
+          return ra - rb;
+        })
+      : filteredCafes;
 
   return (
     <main className="min-h-screen flex flex-col items-center bg-background">
@@ -545,6 +584,38 @@ export default function Home() {
         )}
 
         {!loading && !error && cafes.length > 0 && (
+          <>
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+             <h2 className="text-lg font-bold text-espresso">
+                {userLocation && query === "cafes" ? "Cafes near you" : `Results for "${query}"`}{" "}
+                <span className="font-normal text-muted text-sm">
+                  · {filteredCafes.length} results
+                </span>
+              </h2>
+              <div className="flex bg-crema/60 dark:bg-crema border border-line rounded-lg p-1">
+                <button
+                  onClick={() => setSortBy("relevance")}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+                    sortBy === "relevance"
+                      ? "bg-white dark:bg-background text-espresso shadow-sm"
+                      : "text-muted"
+                  }`}
+                >
+                  Relevance
+                </button>
+                <button
+                  onClick={() => setSortBy("quietest")}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+                    sortBy === "quietest"
+                      ? "bg-white dark:bg-background text-espresso shadow-sm"
+                      : "text-muted"
+                  }`}
+                >
+                  Quietest
+                </button>
+              </div>
+            </div>
+
           <div className="grid md:grid-cols-2 gap-6 items-start">
             <div>
               {filtersActive && (
@@ -569,7 +640,7 @@ export default function Home() {
               )}
 
               <ul className="space-y-4">
-                {filteredCafes.map((cafe) => (
+                {sortedCafes.map((cafe) => (
                   <li
                     key={cafe.id}
                     className="rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel transition-shadow overflow-hidden"
@@ -812,6 +883,7 @@ export default function Home() {
               <CafeMap cafes={cafes} />
             </div>
           </div>
+          </>
         )}
         {!loading && !error && hasSearched && cafes.length === 0 && (
           <p className="text-center text-muted">
