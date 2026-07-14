@@ -300,6 +300,21 @@ export default function Home() {
     };
   }
 
+  const THUMBNAIL_GRADIENTS = [
+    "linear-gradient(135deg, #c9a98c, #6f4e37)",
+    "linear-gradient(135deg, #a7b79f, #3f7a5e)",
+    "linear-gradient(135deg, #d8b98c, #b07d56)",
+    "linear-gradient(135deg, #e0ac5c, #6f4e37)",
+  ];
+
+  function getThumbnailGradient(id: string) {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash + id.charCodeAt(i)) % THUMBNAIL_GRADIENTS.length;
+    }
+    return THUMBNAIL_GRADIENTS[hash];
+  }
+
   function getMatchScore(cafeId: string) {
     if (!preferences) return null;
 
@@ -513,23 +528,31 @@ export default function Home() {
                 {filteredCafes.map((cafe) => (
                   <li
                     key={cafe.id}
-                    className="p-4 rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel transition-shadow"
+                    className="rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel transition-shadow overflow-hidden"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <h2 className="font-bold text-espresso">
-                        {cafe.displayName.text}
-                      </h2>
+                    <div
+                      className="h-28 relative flex items-center justify-center"
+                      style={{ background: getThumbnailGradient(cafe.id) }}
+                    >
+                      <span className="text-white text-4xl font-extrabold opacity-90">
+                        {cafe.displayName.text.charAt(0).toUpperCase()}
+                      </span>
                       <button
                         onClick={() => toggleFavorite(cafe)}
                         aria-label={favorites.has(cafe.id) ? "Remove favorite" : "Add favorite"}
-                        className="shrink-0"
+                        className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center"
                       >
                         <Heart
-                          size={20}
+                          size={16}
                           className={favorites.has(cafe.id) ? "fill-red-500 text-red-500" : "text-muted"}
                         />
                       </button>
                     </div>
+
+                    <div className="p-4">
+                    <h2 className="font-bold text-espresso">
+                      {cafe.displayName.text}
+                    </h2>
                     <p className="text-sm text-muted">{cafe.formattedAddress}</p>
                     <label className="mt-1 flex items-center gap-1.5 text-xs text-muted">
                       <input
@@ -740,6 +763,7 @@ export default function Home() {
                         {notes[cafe.id] ? "Edit your note" : "Add your note"}
                       </button>
                     )}
+                    </div>
                   </li>
                 ))}
               </ul>
