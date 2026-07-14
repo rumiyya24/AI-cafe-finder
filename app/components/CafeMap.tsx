@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { APIProvider, Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
 
-const DEFAULT_CENTER = { lat: 20, lng: 0 }; // roughly centers the whole world map
+const DEFAULT_CENTER = { lat: 20, lng: 0 };
 const DEFAULT_ZOOM = 2;
 
 type Cafe = {
@@ -52,7 +52,7 @@ export default function CafeMap({ cafes }: CafeMapProps) {
 
   return (
     <APIProvider apiKey={apiKey}>
-      <div className="w-full h-96 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
+      <div className="w-full h-96">
         <Map
           defaultCenter={DEFAULT_CENTER}
           defaultZoom={DEFAULT_ZOOM}
