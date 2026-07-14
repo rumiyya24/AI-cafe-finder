@@ -133,7 +133,11 @@ Deployed on [Vercel](https://vercel.com), connected directly to this GitHub repo
 1. Add all environment variables (including `SITE_USERNAME`/`SITE_PASSWORD`) in Vercel's project settings
 2. After the first deploy, add the deployed domain (e.g. `your-app.vercel.app/*`) to the Maps JavaScript API key's allowed HTTP referrers in Google Cloud Console -- the map will fail otherwise, since the key is referrer-restricted
 
-**Why password-protected:** this app has no authentication system by design (single-user: one preferences row, unscoped favorites/notes tables). Without Basic Auth, anyone with the URL could modify your data or consume your API quota (Gemini, Places, Maps, Routes all cost against your account). The middleware (`middleware.ts`) gates every route including API endpoints, not just pages.
+**Why password-protected:** this app has no authentication system by design (single-user: one preferences row, unscoped favorites/notes tables). Without protection, anyone with the URL could modify your data.
+
+The middleware (`middleware.ts`) uses a **public read, protected write** model: search, vibe checks, favoriting/notes/preferences pages, and viewing your favorites are all fully public -- only the actual write actions (`POST`/`DELETE` on `/api/favorites`, `/api/notes`, `/api/preferences`) require Basic Auth. This lets anyone browse and use the app freely (important for sharing it as a portfolio piece) while still protecting your personal data from being modified by a stranger.
+
+Known limitation: favorite/note buttons update the UI optimistically before confirming the write succeeded, so an unauthenticated visitor clicking the heart will see it visually fill in even though the actual database write is rejected with a 401. The data itself is safe either way -- this is a cosmetic follow-up, not a security gap.
 
 ## Design principles
 
@@ -143,6 +147,14 @@ A few deliberate choices worth knowing about if you're reading the code:
 - **Personal observations outrank AI guesses.** If you've actually visited a cafe and left a note, that note is shown over the AI's extraction, marked accordingly.
 - **Filters only apply to real data.** Filtering by noise/wifi/studying only considers cafes that have actually been vibe-checked -- an unchecked cafe silently excluded from "quiet" results would be a false negative, not a real non-match.
 - **Server-side secrets stay server-side.** All Places/Gemini/Supabase secret-tier keys are used exclusively in API routes, never exposed to the browser. The one browser-exposed key (Maps JS) is restricted by HTTP referrer rather than kept secret, since it has to be public to render a map at all.
+
+## Testing
+
+```bash
+npm run test
+```
+
+Uses [Vitest](https://vitest.dev). Currently covers the pure vibe/match-scoring logic (`app/lib/vibeLogic.ts`) -- the note-overrides-AI priority, honest-null-instead-of-fake-zero behavior, and only counting attributes with a real preference set. API route testing (mocked external calls, so tests don't need live credentials or burn API quota) is a planned next step, not yet done.
 
 ## Known limitations
 
