@@ -522,7 +522,7 @@ export default function Home() {
               <button
                 key={prompt.label}
                 onClick={() => runSearch(prompt.query)}
-                className="flex items-center gap-1.5 text-sm px-3.5 py-2 rounded-full border border-line bg-white dark:bg-crema text-espresso hover:border-caramel hover:bg-crema transition-colors"
+                className="flex items-center gap-1.5 text-sm px-3.5 py-2 rounded-full border border-line bg-white dark:bg-crema text-espresso hover:border-caramel hover:bg-crema hover:-translate-y-0.5 transition-all"
               >
                 <prompt.icon size={15} className="text-coffee" />
                 {prompt.label}
@@ -643,7 +643,7 @@ export default function Home() {
                 {sortedCafes.map((cafe) => (
                   <li
                     key={cafe.id}
-                    className="rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel transition-shadow overflow-hidden"
+                    className="rounded-2xl border border-line bg-white dark:bg-crema shadow-sm hover:shadow-md hover:border-caramel hover:-translate-y-0.5 transition-all overflow-hidden"
                   >
                     <div className="h-28 relative overflow-hidden">
                       <CafeThumbnail cafe={cafe} gradient={getThumbnailGradient(cafe.id)} />
