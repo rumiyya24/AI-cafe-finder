@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import type { Cafe, VibeInfo } from "./types";
+import { computeEffectiveVibe, computeMatchScore } from "./lib/vibeLogic";
 import CafeMap from "./components/CafeMap";
 import Concierge from "./components/Concierge";
 import Link from "next/link";
@@ -368,12 +369,11 @@ export default function Home() {
   function getEffectiveVibe(cafeId: string) {
     const vibe = vibeData[cafeId];
     if (!vibe || vibe === "loading" || vibe === "error") return null;
-    const note = notes[cafeId];
-    return {
-      noise_level: note?.noise_level || vibe.noise_level,
-      wifi: note?.wifi || vibe.wifi,
-      good_for_studying: note?.good_for_studying || vibe.good_for_studying,
-    };
+    return computeEffectiveVibe(vibe, notes[cafeId]);
+  }
+
+  function getMatchScore(cafeId: string) {
+    return computeMatchScore(getEffectiveVibe(cafeId), preferences);
   }
 
   const THUMBNAIL_GRADIENTS = [
@@ -389,34 +389,6 @@ export default function Home() {
       hash = (hash + id.charCodeAt(i)) % THUMBNAIL_GRADIENTS.length;
     }
     return THUMBNAIL_GRADIENTS[hash];
-  }
-
-  function getMatchScore(cafeId: string) {
-    if (!preferences) return null;
-
-    const effective = getEffectiveVibe(cafeId);
-    if (!effective) return null;
-
-    const checks: { matched: boolean }[] = [];
-
-    if (preferences.preferred_noise !== "any") {
-      checks.push({ matched: effective.noise_level === preferences.preferred_noise });
-    }
-    if (preferences.preferred_wifi !== "any") {
-      checks.push({ matched: effective.wifi === preferences.preferred_wifi });
-    }
-    if (preferences.preferred_studying !== "any") {
-      checks.push({ matched: effective.good_for_studying === preferences.preferred_studying });
-    }
-
-    if (checks.length === 0) return null;
-
-    const matchedCount = checks.filter((c) => c.matched).length;
-    return {
-      matched: matchedCount,
-      total: checks.length,
-      percent: Math.round((matchedCount / checks.length) * 100),
-    };
   }
 
   function renderEvidenceItem(item: EvidenceItem, reviewUrls?: string[]) {
