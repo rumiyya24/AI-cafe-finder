@@ -39,6 +39,34 @@ function FitBoundsToResults({ cafes }: { cafes: Cafe[] }) {
   return null;
 }
 
+function CoffeePin() {
+  return (
+    <div
+      style={{
+        width: 30,
+        height: 30,
+        borderRadius: "50% 50% 50% 4px",
+        background: "#6f4e37",
+        transform: "rotate(-45deg)",
+        boxShadow: "0 1px 2px rgba(59,42,33,.15), 0 4px 10px rgba(59,42,33,.2)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          background: "#fff",
+          transform: "rotate(45deg)",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function CafeMap({ cafes }: CafeMapProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -69,7 +97,9 @@ export default function CafeMap({ cafes }: CafeMapProps) {
                   lng: cafe.location!.longitude,
                 }}
                 title={cafe.displayName.text}
-              />
+              >
+                <CoffeePin />
+              </AdvancedMarker>
             ))}
         </Map>
       </div>
