@@ -100,6 +100,23 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  const [preferences, setPreferences] = useState<{
+    preferred_noise: string;
+    preferred_wifi: string;
+    preferred_studying: string;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/preferences")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.preferences) {
+          setPreferences(data.preferences);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const suggestedPrompts = [
     { emoji: "☕", label: "Best study cafes", query: "best cafes for studying" },
     { emoji: "💻", label: "I have a Zoom meeting", query: "quiet cafe with good wifi for video calls" },
@@ -263,6 +280,34 @@ export default function Home() {
       noise_level: note?.noise_level || vibe.noise_level,
       wifi: note?.wifi || vibe.wifi,
       good_for_studying: note?.good_for_studying || vibe.good_for_studying,
+    };
+  }
+
+  function getMatchScore(cafeId: string) {
+    if (!preferences) return null;
+
+    const effective = getEffectiveVibe(cafeId);
+    if (!effective) return null;
+
+    const checks: { matched: boolean }[] = [];
+
+    if (preferences.preferred_noise !== "any") {
+      checks.push({ matched: effective.noise_level === preferences.preferred_noise });
+    }
+    if (preferences.preferred_wifi !== "any") {
+      checks.push({ matched: effective.wifi === preferences.preferred_wifi });
+    }
+    if (preferences.preferred_studying !== "any") {
+      checks.push({ matched: effective.good_for_studying === preferences.preferred_studying });
+    }
+
+    if (checks.length === 0) return null;
+
+    const matchedCount = checks.filter((c) => c.matched).length;
+    return {
+      matched: matchedCount,
+      total: checks.length,
+      percent: Math.round((matchedCount / checks.length) * 100),
     };
   }
 
@@ -523,6 +568,21 @@ export default function Home() {
                             <span className="text-neutral-500">{effectiveOutlets}</span>
                           </div>
 
+                          {(() => {
+                            const match = getMatchScore(cafe.id);
+                            if (!match) return null;
+                            return (
+                              <div className="flex items-center justify-between text-xs mb-2 pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                                <span className="text-neutral-600 dark:text-neutral-400">
+                                  Match for your preferences
+                                </span>
+                                <span className="font-semibold text-neutral-900 dark:text-white">
+                                  {match.percent}% ({match.matched}/{match.total})
+                                </span>
+                              </div>
+                            );
+                          })()}
+                          
                           {v.data_source === "ai_estimate" && (
                             <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
                               ⚠️ No reviews available — this is a general AI estimate, not confirmed by real reviews.
