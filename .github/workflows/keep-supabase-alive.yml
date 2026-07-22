@@ -1,0 +1,13 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: "0 12 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping preferences endpoint
+        run: curl -f https://ai-cafe-finder.vercel.app/api/preferences
